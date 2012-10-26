@@ -42,7 +42,7 @@ Library
     containers >= 0.1,
     syb >= 0.1,
     uniplate >= 1.6 && <1.7,
-    data-default >= 0.4 && <0.5
+    data-default >= 0.4 && <0.6
   ghc-options:
     -fwarn-incomplete-patterns
   Exposed-Modules:
