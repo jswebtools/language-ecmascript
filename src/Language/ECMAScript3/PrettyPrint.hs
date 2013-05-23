@@ -1,14 +1,51 @@
--- |Pretty-printing JavaScript.
+{-# LANGUAGE FlexibleInstances #-}
+
+-- | Pretty-printing JavaScript.
 module Language.ECMAScript3.PrettyPrint
   ( 
   javaScript
   , renderStatements
   , renderExpression
+  , PP (..)
   ) where
 
 import Text.PrettyPrint.HughesPJ
 import Language.ECMAScript3.Syntax
 import Prelude hiding (maybe)
+
+------------------------------------------------------------------------------
+
+class PP a where 
+  pp :: a -> Doc
+
+instance PP [Statement a] where 
+  pp = stmtList 
+
+instance PP (Expression a) where 
+  pp = ppExpression True
+
+instance PP (Statement a) where 
+  pp = ppStatement
+
+instance PP (ForInit a) where 
+  pp = forInit 
+
+instance PP (LValue a) where 
+  pp = ppLValue 
+
+instance PP InfixOp where 
+  pp = infixOp 
+
+instance PP AssignOp where 
+  pp = assignOp
+
+instance PP PrefixOp where 
+  pp = prefixOp
+
+
+----------------------------------------------------------------------------
+
+
 
 -- | Renders a list of statements as a 'String'
 renderStatements :: [Statement a] -> String
