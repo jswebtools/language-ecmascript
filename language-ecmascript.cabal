@@ -1,5 +1,5 @@
 Name:           language-ecmascript
-Version:        0.15
+Version:        1.0
 Cabal-Version:	>= 1.10
 Copyright:      (c) 2007-2012 Brown University, (c) 2008-2010 Claudiu Saftoiu,
                 (c) 2012-2013 Stevens Institute of Technology
@@ -30,7 +30,7 @@ Source-repository head
 Source-repository this
    type: git
    location: git://github.com/jswebtools/language-ecmascript.git
-   tag: 0.15
+   tag: 1.0
 
 Library
   Hs-Source-Dirs:
@@ -43,6 +43,7 @@ Library
     containers >= 0.1,
     uniplate >= 1.6 && <1.7,
     data-default-class >= 0.0.1 && < 0.1,
+    data-default-instances-base >= 0.0.1 && < 0.1,
     QuickCheck >= 2.5,
     template-haskell,
     Diff == 0.3.*
@@ -60,9 +61,16 @@ Library
     Language.ECMAScript3.Analysis.Environment
     Language.ECMAScript3.Analysis.LabelSets
     Language.ECMAScript3.SourceDiff
+    Language.ECMAScript5
+    Language.ECMAScript5.Syntax
+    Language.ECMAScript5.Parser
+    Language.ECMAScript5.PrettyPrint
+    Language.ECMAScript5.Syntax.Annotations
   Other-Modules:
     Language.ECMAScript3.Parser.Type
     Language.ECMAScript3.Parser.State
+    Language.ECMAScript5.Parser.Unicode
+    Language.ECMAScript5.Parser.Util
   Default-Extensions:
     DeriveDataTypeable, ScopedTypeVariables, DeriveFunctor, DeriveFoldable, DeriveTraversable, FlexibleContexts
   Default-Language: Haskell2010
