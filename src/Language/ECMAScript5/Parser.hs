@@ -163,7 +163,7 @@ reservedWord = choice [forget keyword, forget futureReservedWord, forget nullLit
 --7.6.1.1
 keyword :: Stream s Identity Char => Parser s String
 keyword = choice [kbreak, kcase, kcatch, kcontinue, kdebugger, kdefault, kdelete,
-                  kdo, kelse, kfinally, kfor, kfunction, kif, kinstanceof, knew,
+                  kdo, kelse, kfinally, kfor, kfunction, kif, kin, kinstanceof, knew,
                   kreturn, kswitch, kthis, kthrow, ktry, ktypeof, kvar, kvoid, kwhile, kwith]
 
 -- ECMAScript keywords
@@ -549,14 +549,14 @@ regularExpressionChars = many regularExpressionChar
 regularExpressionFirstChar :: Stream s Identity Char => Parser s String
 regularExpressionFirstChar = 
   choice [
-    stringify $ regularExpressionNonTerminator `butNot` choice [char '*', char '\\', char '/', char '[' ],
+    stringify $ regularExpressionNonTerminator `butNot` oneOf ['*', '\\', '/', '[' ],
     regularExpressionBackslashSequence,
     regularExpressionClass ]
 
 regularExpressionChar :: Stream s Identity Char => Parser s String
 regularExpressionChar = 
   choice [
-    stringify $ regularExpressionNonTerminator `butNot` choice [char '\\', char '/', char '[' ],
+    stringify $ regularExpressionNonTerminator `butNot` oneOf ['\\', '/', '[' ],
     regularExpressionBackslashSequence,
     regularExpressionClass ]
 
@@ -577,7 +577,7 @@ regularExpressionClass = do l <- char '['
 
 regularExpressionClassChar :: Stream s Identity Char => Parser s String
 regularExpressionClassChar = 
-  stringify (regularExpressionNonTerminator `butNot` (char ']' <|> char '\\'))
+  stringify (regularExpressionNonTerminator `butNot` oneOf [']', '\\'])
   <|> regularExpressionBackslashSequence
     
 regularExpressionFlags :: Stream s Identity Char 
@@ -590,8 +590,8 @@ regularExpressionFlags' :: Stream s Identity Char
 
 regularExpressionFlags' (g, i, m) = 
     (char 'g' >> (if not g then regularExpressionFlags' (True, i, m) else unexpected "duplicate 'g' in regular expression flags")) <|>
-    (char 'i' >> (if not g then regularExpressionFlags' (g, True, m) else unexpected "duplicate 'i' in regular expression flags")) <|>
-    (char 'm' >> (if not g then regularExpressionFlags' (g, i, True) else unexpected "duplicate 'g' in regular expression flags")) <|>
+    (char 'i' >> (if not i then regularExpressionFlags' (g, True, m) else unexpected "duplicate 'i' in regular expression flags")) <|>
+    (char 'm' >> (if not m then regularExpressionFlags' (g, i, True) else unexpected "duplicate 'm' in regular expression flags")) <|>
     return (g, i, m)
     
 -- | 7.9 || TODO: write tests based on examples from Spec 7.9.2, once I

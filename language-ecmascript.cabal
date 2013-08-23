@@ -46,8 +46,7 @@ Library
     data-default-instances-base >= 0.0.1 && < 0.1,
     QuickCheck >= 2.5,
     template-haskell,
-    Diff == 0.3.*,
-    charset >= 0.3.5 && < 0.4
+    Diff == 0.3.*
   ghc-options:
     -fwarn-incomplete-patterns
   Exposed-Modules:
