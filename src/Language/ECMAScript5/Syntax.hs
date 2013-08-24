@@ -163,11 +163,12 @@ data Expression a
     -- ^ @e1\@e2@, spec 11.5, 11.6, 11.7, 11.8, 11.9, 11.10, 11.11
   | CondExpr a (Expression a) (Expression a) (Expression a)
     -- ^ @e1 ? e2 : e3@, spec 11.12
-  | AssignExpr a AssignOp (LValue a) (Expression a)
+  | AssignExpr a (Expression a) AssignOp (Expression a)
     -- ^ @e1 \@=e2@, spec 11.13
---  | ParenExpr a (Expression a) -- ^ @(e)@, spec 11.1.6
+  --  | ParenExpr a (Expression a) -- ^ @(e)@, spec 11.1.6
   | ListExpr a [Expression a] -- ^ @e1, e2@, spec 11.14
   | CallExpr a (Expression a) [Expression a] -- ^ @f(x,y,z)@, spec 11.2.3
+  | CommaExpression a [Expression a]
   --funcexprs are optionally named
   | FuncExpr a (Maybe (Id a)) [Id a] [Statement a]
     -- ^ @function f (x,y,z) {...}@, spec 11.2.5, 13
@@ -197,8 +198,8 @@ data ForInit a = NoInit -- ^ empty
   deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
 
 -- | for..in initializer, spec 12.6
-data ForInInit a = ForInVar (Id a) -- ^ @var x@
-                 | ForInLVal (LValue a) -- ^ @foo.baz@, @foo[bar]@, @z@
+data ForInInit a = ForInVar (VarDecl a) -- ^ @var x@
+                 | ForInLVal (Expression a) -- ^ @foo.baz@, @foo[bar]@, @z@
  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
   
 -- | Statements, spec 12.
@@ -240,6 +241,7 @@ data Statement a
     -- ^ @var x, y=42;@, spec 12.2
   | FunctionStmt a (Id a) {-name-} [Id a] {-args-} [Statement a] {-body-}
     -- ^ @function f(x, y, z) {...}@, spec 13
+  | DebuggerStmt a
   deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)  
 
 -- | Returns 'True' if the statement is an /IterationStatement/

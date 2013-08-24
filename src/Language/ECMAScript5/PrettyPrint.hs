@@ -36,8 +36,8 @@ forInit t = case t of
 
 forInInit :: ForInInit a -> Doc  
 forInInit t = case t of
-  ForInVar id   -> text "var" <+> ppId id
-  ForInLVal lv -> ppLValue lv
+  ForInVar vd   -> text "var" <+> ppVarDecl False vd
+  ForInLVal exp -> ppExpression False exp
 
 caseClause :: CaseClause a -> Doc
 caseClause (CaseClause _ e ss) =
@@ -347,7 +347,7 @@ ppConditionalExpression hasIn e = case e of
 -- 11.13
 ppAssignmentExpression :: Bool -> Expression a -> Doc
 ppAssignmentExpression hasIn e = case e of
-  AssignExpr _ op l r -> ppLValue l <+> assignOp op <+> 
+  AssignExpr _ l op r -> ppExpression False l <+> assignOp op <+> 
                          ppAssignmentExpression hasIn r
   _ -> ppConditionalExpression hasIn e
   

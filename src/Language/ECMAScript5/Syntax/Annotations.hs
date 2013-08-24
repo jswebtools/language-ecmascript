@@ -95,6 +95,7 @@ instance HasAnnotation Expression where
     (ListExpr _ es)              -> (ListExpr a es)
     (CallExpr _ fn params)       -> (CallExpr a fn params)
     (FuncExpr _ mid args s)      -> (FuncExpr a mid args s)
+    x -> x
 
 instance HasAnnotation Statement where
   getAnnotation s = case s of
