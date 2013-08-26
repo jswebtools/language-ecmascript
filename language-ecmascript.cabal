@@ -46,7 +46,9 @@ Library
     data-default-instances-base >= 0.0.1 && < 0.1,
     QuickCheck >= 2.5,
     template-haskell,
-    Diff == 0.3.*
+    Diff == 0.3.*,
+    tasty == 0.2,
+    tasty-hunit == 0.2
   ghc-options:
     -fwarn-incomplete-patterns
   Exposed-Modules:
@@ -66,7 +68,6 @@ Library
     Language.ECMAScript5.Parser
     Language.ECMAScript5.PrettyPrint
     Language.ECMAScript5.Syntax.Annotations
-  Other-Modules:
     Language.ECMAScript3.Parser.Type
     Language.ECMAScript3.Parser.State
     Language.ECMAScript5.Parser.Unicode
@@ -83,6 +84,7 @@ Test-Suite test
     Test.Diff
     Test.Unit
     Test.Pretty
+    Test.StatementTests
   Build-Depends:
     base >= 4 && < 5,
     mtl >= 1.1.0.1,
@@ -91,15 +93,14 @@ Test-Suite test
     containers >= 0.1 && < 0.6,
     directory,
     filepath,
-    HUnit,
-    QuickCheck >= 2.5 && < 2.6,
+    tasty >= 0.2, 
+    tasty-hunit >= 0.2,
+    tasty-quickcheck >= 0.2,
     data-default-class >= 0.0.1 && < 0.1,
-    test-framework >= 0.8 && < 0.9,
-    test-framework-hunit >= 0.3.0 && < 0.4,
-    test-framework-quickcheck2 >= 0.3.0.1 && < 0.4,
     Diff == 0.3.*,
     language-ecmascript
   Default-Extensions: DeriveDataTypeable, ScopedTypeVariables, DeriveFunctor, DeriveFoldable, DeriveTraversable, FlexibleContexts
   Default-Language: Haskell2010
   ghc-options:
     -fwarn-incomplete-patterns
+

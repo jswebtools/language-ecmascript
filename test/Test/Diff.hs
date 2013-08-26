@@ -1,8 +1,5 @@
 module Test.Diff where
 
-import Test.HUnit hiding (Test)
-import Test.Framework
-import Test.Framework.Providers.HUnit
 import System.Exit
 import System.Directory
 import qualified System.FilePath as FP
@@ -13,9 +10,11 @@ import Language.ECMAScript3.Syntax.Annotations
 import Language.ECMAScript3.SourceDiff
 import Control.Monad
 
-tests_diff :: Test
+import Test.Tasty
+import Test.Tasty.HUnit
+
+tests_diff :: IO TestTree
 tests_diff =
-  buildTest $
   do allLefts  <- getDirectoryContents leftDir
      allRights <- getDirectoryContents rightDir
      allDiffs  <- getDirectoryContents expectsDir
@@ -33,7 +32,7 @@ leftDir = "test/diff/left"
 rightDir = "test/diff/right"
 expectsDir = "test/diff/expects"
 
-genTest :: FilePath -> Test
+genTest :: FilePath -> TestTree
 genTest testFileName = testCase testFileName $
                        diffTest (leftDir `FP.combine` testFileName)
                                 (rightDir `FP.combine` testFileName)

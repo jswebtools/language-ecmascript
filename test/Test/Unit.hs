@@ -1,8 +1,8 @@
 module Test.Unit where
 
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.HUnit hiding (Test)
+import Test.Tasty
+import Test.Tasty.HUnit
+
 import System.Exit
 import System.Directory
 import qualified System.FilePath as FilePath
@@ -13,16 +13,14 @@ import Language.ECMAScript3.Syntax.Annotations
 import Language.ECMAScript3.SourceDiff
 import Control.Monad
 
-
-tests_unit :: Test
+tests_unit :: IO TestTree
 tests_unit =
-  buildTest $
   do allFiles <- getDirectoryContents testDir
      let validFiles = filter (\x -> FilePath.takeExtension x == ".js") allFiles
      return $ testGroup "Parser Unit tests" $  map genTest validFiles
 
 
-genTest :: FilePath -> Test
+genTest :: FilePath -> TestTree
 genTest file = testCase file $ parsePrettyTest (testDir `FilePath.combine` file) 
 
 testDir = "test/parse-pretty"

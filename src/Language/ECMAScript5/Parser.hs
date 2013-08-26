@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE Rank2Types #-}
 
 module Language.ECMAScript5.Parser (parse
                                    , PosParser
@@ -6,6 +6,7 @@ module Language.ECMAScript5.Parser (parse
                                    , ParseError
                                    , SourcePos
                                    , SourceSpan
+                                   , Positioned
                                    , expression
                                    , statement
                                    , program
@@ -13,9 +14,12 @@ module Language.ECMAScript5.Parser (parse
                                    , parseFromFile
                                    ) where
 
+import Debug.Trace
+import System.IO.Unsafe
+
 import Language.ECMAScript5.Syntax
 import Language.ECMAScript5.Syntax.Annotations
-import Language.ECMAScript5.Parser.Util hiding (butNot)
+import Language.ECMAScript5.Parser.Util
 import Language.ECMAScript5.Parser.Unicode
 import Data.Default.Class
 import Data.Default.Instances.Base
@@ -43,7 +47,7 @@ type Parser a = forall s. Stream s Identity Char => ParsecT s ParserState Identi
 --import Numeric as Numeric
 
 -- the statement label stack
-type ParserState = [String]
+type ParserState = (Bool, [String])
 
 data SourceSpan = SourceSpan (SourcePos, SourcePos)
 type Positioned x = x SourceSpan
@@ -90,24 +94,24 @@ changeState forward backward = mkPT . transform . runParsecT
     transform p st = (fmap . fmap . fmap) (mapReply forward) (p (mapState backward st))
 
 initialParserState :: ParserState
-initialParserState = []
+initialParserState = (False, [])
 
 -- | checks if the label is not yet on the stack, if it is -- throws
 -- an error; otherwise it pushes it onto the stack
 pushLabel :: String -> Parser ()
-pushLabel lab = do labs <- getState
+pushLabel lab = do (nl, labs) <- getState
                    pos <- getPosition
                    if lab `elem` labs 
                      then fail $ "Duplicate label at " ++ show pos
-                     else putState (lab:labs)
+                     else putState (nl, lab:labs)
 
 popLabel :: Parser ()
-popLabel = modifyState safeTail
+popLabel = modifyState (second safeTail)
   where safeTail [] = []
         safeTail (_:xs) = xs
 
 clearLabels :: ParserState -> ParserState
-clearLabels _ = []
+clearLabels = second (const [])
 
 withFreshLabelStack :: Parser a -> Parser a
 withFreshLabelStack p = do oldState <- getState
@@ -115,6 +119,18 @@ withFreshLabelStack p = do oldState <- getState
                            a <- p
                            putState oldState
                            return a
+
+-- was newline consumed? keep as parser state set in 'ws' parser
+
+setNewLineState :: [Bool] -> Parser Bool
+setNewLineState wsConsumed = 
+  let consumedNewLine = any id wsConsumed in do
+    when (not.null $ wsConsumed) $
+      modifyState (first $ const $ consumedNewLine)
+    return consumedNewLine
+
+hadNewLine :: Parser ()
+hadNewLine = fst <$> getState >>= guard
 
 -- a convenience wrapper to take care of the position, "with position"
 withPos   :: (HasAnnotation x, Stream s Identity Char) => ParsecT s u Identity (Positioned x) -> ParsecT s u Identity (Positioned x)
@@ -125,17 +141,14 @@ withPos p = do start <- getPosition
 
 -- Below "x.y.z" are references to ECMAScript 5 spec chapters that discuss the corresponding grammar production
 --7.2
-whiteSpace :: Parser ()
-whiteSpace = forget $ choice [uTAB, uVT, uFF, uSP, uNBSP, uBOM, uUSP]
 
-spaces :: Parser ()
-spaces = skipMany (whiteSpace <|> comment <?> "")
-
-lexeme :: Parser a -> Parser a
+lexeme :: Show a => Parser a -> Parser a
 lexeme p = p <* ws 
 
 ws :: Parser Bool
-ws = fmap (any id) $ many (False <$ whiteSpace <|> True <$ lineTerminator)
+ws = many (False <$ whiteSpace <|> False <$ comment <|> True <$ lineTerminator) >>= setNewLineState
+  where whiteSpace :: Parser ()
+        whiteSpace = forget $ choice [uTAB, uVT, uFF, uSP, uNBSP, uBOM, uUSP]
 
 --7.3
 uCRalone :: Parser Char
@@ -147,48 +160,39 @@ lineTerminatorSequence  :: Parser ()
 lineTerminatorSequence = forget (uLF <|> uCRalone <|> uLS <|> uPS ) <|> forget uCRLF
 
 --7.4
-comment :: Parser ()
-comment = multiLineComment <|> singleLineComment
+comment :: Parser String
+comment = try multiLineComment <|> try singleLineComment
 
-singleLineCommentChars :: Parser ()
-singleLineCommentChars = singleLineCommentChar >> singleLineCommentChars
+singleLineCommentChar :: Parser Char
+singleLineCommentChar  = notFollowedBy lineTerminator *> noneOf ""
 
-singleLineCommentChar :: Parser ()
-singleLineCommentChar  = notP lineTerminator
-multiLineCommentChars :: Parser ()
-multiLineCommentChars  =  multiLineNotAsteriskChar *> multiLineCommentChars
-                      <|> char '*' *> postAsteriskCommentChars
-multiLineComment :: Parser ()
-multiLineComment = string "/*" *> optional multiLineCommentChars <* string "*/"
-singleLineComment :: Parser ()
-singleLineComment = string "//" >> optional singleLineCommentChars
-multiLineNotAsteriskChar :: Parser ()
-multiLineNotAsteriskChar = notP $ char '*'
-multiLineNotForwardSlashOrAsteriskChar :: Parser Char
-multiLineNotForwardSlashOrAsteriskChar = noneOf "/*"
-postAsteriskCommentChars :: Parser ()
-postAsteriskCommentChars =  multiLineNotForwardSlashOrAsteriskChar *>
-                            optional multiLineCommentChars
-                        <|> char '*' *>
-                            optional postAsteriskCommentChars
+multiLineComment :: Parser String
+multiLineComment = string "/*" *> (concat <$> many insideMultiLineComment) <* string "*/"
+
+singleLineComment :: Parser String
+singleLineComment = string "//" >> many singleLineCommentChar
+
+insideMultiLineComment :: Parser [Char]
+insideMultiLineComment = noAsterisk <|> try asteriskInComment
+ where 
+  noAsterisk = 
+    stringify $ noneOf "*"
+  asteriskInComment =
+    (:) <$> char '*' <*> (stringify (noneOf "/*") <|> "" <$ lookAhead (char '*') )
 
 --7.5
 --token = identifierName <|> punctuator <|> numericLiteral <|> stringLiteral
 
-butNot :: (Monad m, Stream s m c, Show a, Show a1)
-       => ParsecT s st m a -> ParsecT s st m a1 -> ParsecT s st m a
-butNot positive negative = do lookAhead $ notFollowedBy negative 
-                              positive
 --7.6
 identifier :: PosParser Expression
-identifier = lexeme $ withPos $ do name <- identifierName `butNot` reservedWord
+identifier = lexeme $ withPos $ do name <- identifierName
                                    return $ VarRef def name
 
 identifierName :: PosParser Id
-identifierName = lexeme $ withPos $ fmap (Id def) $ (:)
+identifierName = lexeme $ withPos $ flip butNot reservedWord $ fmap (Id def) $ 
+                 (:)
                  <$> identifierStart
                  <*> many identifierPart
-
 identifierStart :: Parser Char
 identifierStart = unicodeLetter <|> char '$' <|> char '_' <|> unicodeEscape
 
@@ -302,9 +306,9 @@ pleqt = forget $ lexeme $ string "<="
 pgeqt :: Parser ()
 pgeqt = forget $ lexeme $ string ">="
 peq :: Parser ()
-peq  = forget $ lexeme $ string "=="
+peq  = forget $ lexeme $ string "==" *> notFollowedBy (char '=')
 pneq :: Parser ()
-pneq = forget $ lexeme $ string "!="
+pneq = forget $ lexeme $ string "!=" *> notFollowedBy (char '=')
 pseq :: Parser ()
 pseq = forget $ lexeme $ string "==="
 psneq :: Parser ()
@@ -326,9 +330,9 @@ pplusplus = forget $ lexeme $ string "++"
 pminusminus :: Parser ()
 pminusminus = forget $ lexeme $ string "--"
 pshl :: Parser ()
-pshl = forget $ lexeme $ string "<<"
+pshl = forget $ lexeme $ string "<<" *> notFollowedBy (char '<')
 pshr :: Parser ()
-pshr = forget $ lexeme $ string ">>"
+pshr = forget $ lexeme $ string ">>" *> notFollowedBy (char '>')
 pushr :: Parser ()
 pushr = forget $ lexeme $ string ">>>"
 pband :: Parser ()
@@ -624,28 +628,7 @@ regularExpressionFlags' (g, i, m) =
 -- doWhileStatement, continuteStatement, breakStatement,
 -- returnStatement and throwStatement.
 autoSemi :: Parser ()
-autoSemi = psemi
-        <|>lineTerminator
-        <|>prbrace
-  
--- | Automatic Semicolon Insertion algorithm, rule 2;
--- to be used at the end of the program
-endOfProgram :: Parser ()
-endOfProgram = forget (char ';') <|> eof
-           
--- | Automatic Semicolon Insertion algorithm, rule 3; it takes 2
--- parsers: 'left' that parses whatever is to the left of [no
--- LineTerminator here] and 'right' that parses whatever is to the
--- right; if after parsing 'left' and any number of whiteSpaces a
--- lineTerminator is found, 'right' is not invoked and (l, Nothing) is
--- returned, where 'l' is the result of left; otherwise (l, Just r) is
--- returned, where 'l' and 'r' are results of left and right
--- respectively.
-noLineTerminator :: Parser a -> Parser b -> Parser (a, Maybe b)
-noLineTerminator left right = do l <- left
-                                 spaces
-                                 (l, Nothing) <$ try lineTerminator <|>
-                                   (\r-> (l, Just r)) <$> right
+autoSemi = psemi <|> hadNewLine <|> lookAhead prbrace <|> eof
 
 -- 11.1
 -- primary expressions
@@ -679,13 +662,13 @@ objectLiteral = lexeme $ withPos $
 
 propertyAssignment :: Parser (Positioned PropAssign)
 propertyAssignment = lexeme $ withPos $
-                     (do lexeme $ string "get"
+                     (do try (makeKeyword "get" <* notFollowedBy pcolon)
                          pname <- propertyName
                          prparen
                          plparen
                          body <- inBraces functionBody
                          return $ PGet def pname body)
-                  <|>(do lexeme $ string "set"
+                  <|>(do try (makeKeyword "set" <* notFollowedBy pcolon)
                          pname <- propertyName
                          param <- inParens identifierName
                          body <- inBraces functionBody
@@ -716,8 +699,8 @@ memberExpression =
           , flip (DotRef      def) <$  pdot <*> identifierName])
                                           
 newExpression :: PosParser Expression
-newExpression = (lexeme $ withPos $ NewExpr def <$ knew <*> newExpression <*> return [])
-             <|> memberExpression
+newExpression = try memberExpression
+                <|> (lexeme $ withPos $ NewExpr def <$ knew <*> newExpression <*> return [])
 
 callExpression :: PosParser Expression
 callExpression = 
@@ -779,25 +762,32 @@ conditionalExpressionGen =
 
 type InOp s = Operator s (Bool, ParserState) Identity (Positioned Expression)
 
+mkOp str =
+  let end :: Parser Char
+      end =  if all isAlphaNum str 
+             then alphaNum
+             else oneOf "+-!~*/%<>=&^|"
+  in liftIn $ lexeme $ try $ (string str <* notFollowedBy end)
+
 makeInfixExpr :: Stream s Identity Char => String -> InfixOp -> InOp s
 makeInfixExpr str constr = Infix parser AssocLeft where
   parser = 
-      liftIn (try $ lexeme $ string str) *> return (InfixExpr def constr)
+      mkOp str *> return (InfixExpr def constr)
 
 makeUnaryAssnExpr str prefixConstr postfixConstr =
   [ Prefix  $ parser prefixConstr
   , Postfix $ parser postfixConstr ]
   where
-    parser x = UnaryAssignExpr def x <$ liftIn (try $ lexeme $ string str)
+    parser x = UnaryAssignExpr def x <$ mkOp str
 
 makePrefixExpr str constr =
-  Prefix  $ UnaryAssignExpr def constr <$ liftIn (try $ lexeme $ string str) 
+  Prefix  $ UnaryAssignExpr def constr <$ mkOp str
 
 makePostfixExpr str constr =
-  Postfix $ UnaryAssignExpr def constr <$ liftIn (try $ lexeme $ string str) 
+  Postfix $ UnaryAssignExpr def constr <$ mkOp str
 
 makeUnaryExpr str constr =
-  Prefix  $ PrefixExpr def constr <$ liftIn (try $ lexeme $ string str) 
+  Prefix  $ PrefixExpr def constr <$ mkOp str
 
 exprTable:: Stream s Identity Char => [[InOp s]]
 exprTable =
@@ -821,28 +811,29 @@ exprTable =
   , [ makeInfixExpr "+" OpAdd
     , makeInfixExpr "-" OpSub
     ]
-  , [ makeInfixExpr "<<" OpLShift
-    , makeInfixExpr ">>" OpSpRShift
-    , makeInfixExpr ">>>" OpZfRShift
+  , [ makeInfixExpr ">>>" OpZfRShift
+    , makeInfixExpr ">>"  OpSpRShift
+    , makeInfixExpr "<<"  OpLShift
     ]
-  , [ makeInfixExpr "<" OpLT
-    , makeInfixExpr "<=" OpLEq
-    , makeInfixExpr ">" OpGT
+  , [ makeInfixExpr "<=" OpLEq
+    , makeInfixExpr "<"  OpLT
     , makeInfixExpr ">=" OpGEq
+    , makeInfixExpr ">"  OpGT
     , makeInfixExpr "instanceof" OpInstanceof
     , makeInfixExpr "in" OpIn
     ]
-  , [ makeInfixExpr "==" OpEq
-    , makeInfixExpr "!=" OpNEq
-    , makeInfixExpr "===" OpStrictEq
+  , [ makeInfixExpr "===" OpStrictEq
     , makeInfixExpr "!==" OpStrictNEq
+    , makeInfixExpr "=="  OpEq
+    , makeInfixExpr "!="  OpNEq
     ]
-  , [ makeInfixExpr "&" OpBAnd ]
-  , [ makeInfixExpr "^" OpBXor ]
-  , [ makeInfixExpr "|" OpBOr ]
+  , [ makeInfixExpr "&"  OpBAnd ]
+  , [ makeInfixExpr "^"  OpBXor ]
+  , [ makeInfixExpr "|"  OpBOr ]
   , [ makeInfixExpr "&&" OpLAnd ]
   , [ makeInfixExpr "||" OpLOr ]
   ]
+
 
 logicalOrExpressionGen :: PosInParser Expression
 logicalOrExpressionGen = 
@@ -855,8 +846,8 @@ makeExpression xs = CommaExpr def xs
 
 -- | A parser that parses ECMAScript expressions
 expression, expressionNoIn :: PosParser Expression
-expression     = withPos $ makeExpression <$> assignmentExpression     `sepBy` pcomma
-expressionNoIn = withPos $ makeExpression <$> assignmentExpressionNoIn `sepBy` pcomma
+expression     = withPos $ makeExpression <$> assignmentExpression     `sepBy1` pcomma
+expressionNoIn = withPos $ makeExpression <$> assignmentExpressionNoIn `sepBy1` pcomma
 
 functionBody :: Parser [Positioned Statement]
 functionBody = option [] sourceElements
@@ -884,7 +875,6 @@ parseStatement =
   choice
   [ parseBlock 
   , variableStatement 
-  , emptyStatement 
   , expressionStatement 
   , ifStatement 
   , iterationStatement 
@@ -896,7 +886,8 @@ parseStatement =
   , switchStatement 
   , throwStatement 
   , tryStatement 
-  , debuggerStatement ]
+  , debuggerStatement
+  , emptyStatement ]
 
 statementList :: Parser [Positioned Statement]
 statementList = many1 (withPos parseStatement)
@@ -940,7 +931,7 @@ initalizerNoIn =
 
 emptyStatement :: PosParser Statement
 emptyStatement = 
-  withPos $ EmptyStmt def <$ autoSemi
+  withPos $ EmptyStmt def <$ psemi
 
 expressionStatement :: PosParser Statement
 expressionStatement = 
@@ -960,7 +951,7 @@ ifStatement =
   <*> option (EmptyStmt def) (kelse *> parseStatement)
   
 iterationStatement :: PosParser Statement
-iterationStatement = doStatement <|> whileStatement
+iterationStatement = doStatement <|> whileStatement <|> forStatement
 
 doStatement :: PosParser Statement
 doStatement = 
@@ -1054,7 +1045,7 @@ switchStatement =
   <*> inParens expression
   <*> caseBlock
   where 
-    makeCaseClauses cs d cs2 = cs ++ maybeToList d ++ cs
+    makeCaseClauses cs d cs2 = cs ++ maybeToList d ++ cs2
     caseBlock = 
       inBraces $ 
       makeCaseClauses
@@ -1111,7 +1102,7 @@ statement = parseStatement
 
 -- | A parser that parses an ECMAScript program.
 program :: PosParser Program
-program = whiteSpace *> withPos (Program def <$> many statement) <* endOfProgram
+program = ws *> withPos (Program def <$> many statement) <* eof
 
 -- | Parse from a stream given a parser, same as 'Text.Parsec.parse'
 -- in Parsec. We can use this to parse expressions or statements

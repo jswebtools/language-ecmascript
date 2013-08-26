@@ -18,7 +18,7 @@ notP p = do s <- p
 -- | parses anything parsable by the first parser, and not the second
 butNot :: (Monad m, Stream s m c, Show a, Show a1)
        => ParsecT s st m a -> ParsecT s st m a1 -> ParsecT s st m a
-butNot positive negative = do lookAhead $ notFollowedBy negative 
+butNot positive negative = do notFollowedBy negative 
                               positive
 
 -- | to accomodate the requirement that <CR><LF> should be considered
