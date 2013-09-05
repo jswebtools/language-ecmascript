@@ -44,8 +44,10 @@ lexeme p = p <* ws
 
 --7.2
 
-ws :: Parser Bool
-ws = many (False <$ whiteSpace <|> False <$ comment <|> True <$ lineTerminator) >>= setNewLineState
+ws :: Parser WhiteSpaceState
+ws = do pos <- getPosition
+        isNewLine <- many (False <$ whiteSpace <|> False <$ comment <|> True <$ lineTerminator)
+        setNewLineState (any id isNewLine, pos)
   where whiteSpace :: Parser ()
         whiteSpace = forget $ choice [uTAB, uVT, uFF, uSP, uNBSP, uBOM, uUSP]
 
@@ -93,7 +95,7 @@ identifier :: PosParser Expression
 identifier = withPos $ VarRef def <$> identifierName
 
 identifierName :: PosParser Id
-identifierName = lexeme $ withPos $ flip butNot reservedWord $ fmap (Id def) $
+identifierName = withPos $ lexeme $ flip butNot reservedWord $ fmap (Id def) $
                  (:)
                  <$> identifierStart
                  <*> many identifierPart
@@ -112,11 +114,11 @@ identifierPart = identifierStart <|> unicodeCombiningMark <|> unicodeDigit <|>
 reservedWord :: Parser ()
 reservedWord = choice [forget keyword, forget futureReservedWord, forget nullLiteral, forget booleanLiteral]
 
-makeKeyword :: String -> Parser Bool
+makeKeyword :: String -> Parser WhiteSpaceState
 makeKeyword word = try (string word <* notFollowedBy identifierPart) *> ws
 
 --7.6.1.1
-keyword :: Parser Bool
+keyword :: Parser WhiteSpaceState
 keyword = choice [kbreak, kcase, kcatch, kcontinue, kdebugger, kdefault, kdelete,
                   kdo, kelse, kfinally, kfor, kfunction, kif, kin, kinstanceof, knew,
                   kreturn, kswitch, kthis, kthrow, ktry, ktypeof, kvar, kvoid, kwhile, kwith]
@@ -125,7 +127,7 @@ keyword = choice [kbreak, kcase, kcatch, kcontinue, kdebugger, kdefault, kdelete
 kbreak, kcase, kcatch, kcontinue, kdebugger, kdefault, kdelete,
   kdo, kelse, kfinally, kfor, kfunction, kif, kin, kinstanceof, knew,
   kreturn, kswitch, kthis, kthrow, ktry, ktypeof, kvar, kvoid, kwhile, kwith
-  :: Parser Bool
+  :: Parser WhiteSpaceState
 kbreak      = makeKeyword "break"
 kcase       = makeKeyword "case"
 kcatch      = makeKeyword "catch"
@@ -153,15 +155,15 @@ kvoid       = makeKeyword "void"
 kwhile      = makeKeyword "while"
 kwith       = makeKeyword "with"
 
-sget, sset :: Parser Bool
+sget, sset :: Parser WhiteSpaceState
 sget = makeKeyword "get"
 sset = makeKeyword "set"
 
 --7.6.1.2
-futureReservedWord :: Parser Bool
+futureReservedWord :: Parser WhiteSpaceState
 futureReservedWord = choice [kclass, kconst, kenum, kexport, kextends, kimport, ksuper]
 
-kclass, kconst, kenum, kexport, kextends, kimport, ksuper :: Parser Bool
+kclass, kconst, kenum, kexport, kextends, kimport, ksuper :: Parser WhiteSpaceState
 kclass   = makeKeyword "class"
 kconst   = makeKeyword "const"
 kenum    = makeKeyword "enum"
@@ -273,7 +275,7 @@ mkInteger :: Integer -> Integer -> Int
 mkInteger whole exp = fromInteger $ whole * (10 ^ exp)
 
 decimalLiteral :: PosParser Expression
-decimalLiteral = lexeme $ withPos $
+decimalLiteral = withPos $ lexeme $
   (do whole <- decimalInteger
       mfraclen <- optionMaybe (pdot >> decimalDigitsWithLength)
       mexp  <- optionMaybe exponentPart
@@ -298,7 +300,7 @@ digits2NumberAndLength is =
   in (n, l)
 
 decimalIntegerLiteral :: PosParser Expression
-decimalIntegerLiteral = lexeme $ withPos $ decimalInteger >>=
+decimalIntegerLiteral = withPos $ lexeme $ decimalInteger >>=
                         \i -> return $ NumLit def $ Left $ fromInteger i
 
 decimalInteger :: Parser Integer
@@ -336,7 +338,7 @@ fromDecimal :: String -> Float
 fromDecimal = fst . head . Numeric.readDec
 
 hexIntegerLiteral :: PosParser Expression
-hexIntegerLiteral = lexeme $ withPos $ do
+hexIntegerLiteral = withPos $ lexeme $ do
   try (char '0' >> oneOf ['x', 'X'])
   NumLit def . Left . fromHex <$> many1 hexDigit
 
@@ -359,7 +361,7 @@ inBraces :: Parser a -> Parser a
 inBraces x = between plbrace prbrace x
 
 stringLiteral :: PosParser (Expression)
-stringLiteral =  lexeme $ withPos $
+stringLiteral =  withPos $ lexeme $
                  do s <- ((inDblQuotes $ concatM $ many doubleStringCharacter)
                           <|>
                           (inQuotes $ concatM $ many singleStringCharacter))
@@ -416,7 +418,7 @@ unicodeEscapeSequence = chr . int32toInt . fromHex <$> (char 'u' *> count 4 hexD
 --7.8.5 and 15.10.4.1
 regularExpressionLiteral :: PosParser Expression
 regularExpressionLiteral =
-    lexeme $ withPos $ do
+    withPos $ lexeme $ do
       body <- between pdiv pdiv regularExpressionBody
       (g, i, m) <- regularExpressionFlags
       return $ RegexpLit def body g i m

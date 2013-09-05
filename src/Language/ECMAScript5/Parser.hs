@@ -430,25 +430,25 @@ forStatement =
       <*> expression
 
 restricted :: (HasAnnotation e)
-           =>  Parser Bool -> (ParserAnnotation -> a -> e ParserAnnotation) -> Parser a -> Parser a -> Parser (e ParserAnnotation)
+           =>  Parser WhiteSpaceState -> (ParserAnnotation -> a -> e ParserAnnotation) -> Parser a -> Parser a -> Parser (e ParserAnnotation)
 restricted keyword constructor null parser =
   withPos $
-  do consumedNewLine <- keyword 
-     rest <- if consumedNewLine
+  do wsSt <- keyword 
+     rest <- if fst wsSt
        then null
        else parser
      autoSemi
      return (constructor def rest)
 
 validatedRestricted :: (HasAnnotation e)
-                    => Parser Bool
+                    => Parser WhiteSpaceState
                     -> (ParserAnnotation -> a -> (Parser (e ParserAnnotation)))
                     -> Parser a -> Parser a
                     -> Parser (e ParserAnnotation)
 validatedRestricted keyword constructor null parser =
   withPos $
-  do consumedNewLine <- keyword 
-     rest <- if consumedNewLine
+  do wsSt <- keyword 
+     rest <- if fst wsSt
        then null
        else parser
      result <- constructor def rest

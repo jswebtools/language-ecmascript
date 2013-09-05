@@ -39,6 +39,7 @@ module Language.ECMAScript5.ParserState
        , EnclosingStatement (..)
        , spanBegin
        , spanEnd
+       , WhiteSpaceState
        ) where 
  
 import Text.Parsec hiding (labels) 
@@ -52,13 +53,18 @@ import Control.Monad.Identity
 import Control.Applicative
 import Control.Monad.State (modify)
  
+import Data.Data (Data)
+import Data.Typeable (Typeable)
+
 type Positioned x = x ParserAnnotation 
  
 type Parser   a = forall s. Stream s Identity Char => ParsecT s ParserState Identity a 
 type InParser a =  forall s. Stream s Identity Char => ParsecT s InParserState Identity a 
 type PosParser x = Parser (Positioned x) 
  
-data ParserState = ParserState { hasNewLine :: Bool, comments :: [Comment], enclosing :: [EnclosingStatement], labelSet :: [Label] }
+type WhiteSpaceState = (Bool, SourcePos)
+
+data ParserState = ParserState { whiteSpaceState :: WhiteSpaceState, comments :: [Comment], enclosing :: [EnclosingStatement], labelSet :: [Label] }
                  deriving (Show)
 data InParserState = InParserState { allowIn :: Bool, baseState :: ParserState } 
 
@@ -112,6 +118,7 @@ type Label = String
 
 data SourceSpan =  
   SourceSpan (SourcePos, SourcePos)
+  deriving (Data, Typeable)
 
 spanBegin :: SourceSpan -> SourcePos
 spanBegin (SourceSpan (b, _)) = b
@@ -122,8 +129,17 @@ spanEnd (SourceSpan (_, e)) = e
 data Comment  
   = SingleLineComment String  
   | MultiLineComment String  
-    deriving Show 
+    deriving (Show, Data, Typeable)
  
+class HasWhiteSpacePos a where
+  getWhiteSpaceStartPos :: a -> SourcePos
+
+instance HasWhiteSpacePos ParserState where
+  getWhiteSpaceStartPos = snd . whiteSpaceState
+    
+instance HasWhiteSpacePos InParserState where
+  getWhiteSpaceStartPos = snd . whiteSpaceState . baseState
+
 class HasComments a where 
   getComments :: a -> [Comment] 
   setComments :: a -> [Comment] -> a 
@@ -164,13 +180,13 @@ consumeComments = do comments <- getComments <$> getState
 -- a convenience wrapper to take care of the position, "with
 -- position". Whenever we return something `Positioned` we need to use
 -- it.
-withPos   :: (HasAnnotation x, HasComments state, Stream s Identity Char) 
+withPos   :: (HasAnnotation x, HasComments state, HasWhiteSpacePos state, Stream s Identity Char) 
           => ParsecT s state Identity (Positioned x) 
           -> ParsecT s state Identity (Positioned x) 
 withPos p = do start <- getPosition 
                comments <- consumeComments 
                result <- p 
-               end <- getPosition 
+               end <- getWhiteSpaceStartPos <$> getState 
                return $ setAnnotation (SourceSpan (start, end), comments) result 
  
 postfixWithPos :: (HasAnnotation x, HasComments state, Stream s Identity Char) => 
@@ -226,11 +242,11 @@ changeState forward backward = mkPT . transform . runParsecT
     mapReply _ (Error e) = Error e 
     transform p st = (fmap . fmap . fmap) (mapReply forward) (p (mapState backward st)) 
  
-modifyNewLine  f st = st { hasNewLine = f (hasNewLine st) }
+modifyNewLine  f st = st { whiteSpaceState = f (whiteSpaceState st) }
 modifyEnclosing f st = st { enclosing = f (enclosing st) }
  
 initialParserState :: ParserState 
-initialParserState = ParserState False [] [] []
+initialParserState = ParserState (False, initialPos "") [] [] []
 
 -- | checks if the label is not yet on the stack, if it is -- throws 
 -- an error; otherwise it pushes it onto the stack 
@@ -270,16 +286,13 @@ withFreshEnclosing p = do oldEnclosing <- getEnclosing
                           modifyState $ modifyEnclosing (const oldEnclosing)
                           return a 
  
--- was newline consumed? keep as parser state set in 'ws' parser 
- 
-setNewLineState :: [Bool] -> Parser Bool 
-setNewLineState wsConsumed = 
-  let consumedNewLine = any id wsConsumed in do 
-    modifyState $ modifyNewLine (const consumedNewLine) 
-    return consumedNewLine 
+setNewLineState :: WhiteSpaceState -> Parser WhiteSpaceState
+setNewLineState st = do
+    modifyState $ modifyNewLine (const st) 
+    return st
  
 hadNewLine :: Parser () 
-hadNewLine = hasNewLine <$> getState >>= guard 
+hadNewLine = fst . whiteSpaceState <$> getState >>= guard 
  
-hadNoNewLine :: Parser() 
-hadNoNewLine = hasNewLine <$> getState >>= guard.not
+hadNoNewLine :: Parser () 
+hadNoNewLine = fst . whiteSpaceState <$> getState >>= guard.not
