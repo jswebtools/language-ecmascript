@@ -1,0 +1,6 @@
+[submodule "submodules/mozilla-js-parser-api"]
+	path = submodules/mozilla-js-parser-api
+	url = git@github.com:achudnov/mozilla-js-parser-api.git
+[submodule "submodules/test262"]
+	path = submodules/test262
+	url = git@github.com:tc39/test262.git

@@ -108,3 +108,7 @@ Test-Suite test
   ghc-options:
     -fwarn-incomplete-patterns
 
+Executable gen-test262
+  Hs-Source-Dirs: test-data/test262
+  Main-Is: GenerateTestcasesMain.hs
+  Build-Depends: base >= 4 && < 5, language-ecmascript, mozilla-js-parser-api >= 0.1, aeson, bytestring, language-ecmascript, mozilla-js-parser-api
