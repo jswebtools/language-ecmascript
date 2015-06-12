@@ -41,7 +41,7 @@ unProgram :: Program a -> [Statement a]
 unProgram (Program _ stmts) = stmts
 
 data Id a = Id a String 
-          deriving (Show,Eq,Ord,Data,Typeable,Functor,Foldable,Traversable)
+          deriving (Read,Show,Eq,Ord,Data,Typeable,Functor,Foldable,Traversable)
 
 unId :: Id a -> String
 unId (Id _ s) = s
@@ -70,7 +70,7 @@ data InfixOp = OpLT -- ^ @<@
              | OpBXor -- ^ @^@
              | OpBOr -- ^ @|@
              | OpAdd -- ^ @+@
-    deriving (Show,Data,Typeable,Eq,Ord,Enum)
+    deriving (Read,Show,Data,Typeable,Eq,Ord,Enum)
 
 -- | Assignment operators: see spec 11.13
 data AssignOp = OpAssign -- ^ simple assignment, @=@
@@ -85,14 +85,14 @@ data AssignOp = OpAssign -- ^ simple assignment, @=@
               | OpAssignBAnd -- ^ @&=@
               | OpAssignBXor -- ^ @^=@
               | OpAssignBOr -- ^ @|=@
-  deriving (Show,Data,Typeable,Eq,Ord)
+  deriving (Read,Show,Data,Typeable,Eq,Ord)
 
 -- | Unary assignment operators: see spec 11.3, 11.4.4, 11.4.5
 data UnaryAssignOp = PrefixInc -- ^ @++x@
                    | PrefixDec -- ^ @--x@
                    | PostfixInc -- ^ @x++@
                    | PostfixDec -- ^ @x--@
-  deriving (Show, Data, Typeable, Eq, Ord)
+  deriving (Read,Show, Data, Typeable, Eq, Ord)
 
 -- | Prefix operators: see spec 11.4 (excluding 11.4.4, 11.4.5)
 data PrefixOp = PrefixLNot -- ^ @!@
@@ -102,7 +102,7 @@ data PrefixOp = PrefixLNot -- ^ @!@
               | PrefixTypeof -- ^ @typeof@
               | PrefixVoid -- ^ @void@
               | PrefixDelete -- ^ @delete@
-  deriving (Show,Data,Typeable,Eq,Ord)
+  deriving (Read,Show,Data,Typeable,Eq,Ord)
 
 type Number = Either Int32 Double
 
@@ -110,7 +110,7 @@ type Number = Either Int32 Double
 data Prop a = PropId a String -- ^ property name is an identifier, @foo@
             | PropString a String -- ^ property name is a string, @\"foo\"@
             | PropNum a Number -- ^ property name is a number, @42@
-  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
+  deriving (Read,Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
 
 -- | Property assignments, see spec 11.1.5
 data PropAssign a = 
@@ -121,14 +121,14 @@ data PropAssign a =
   | PSet  a (Prop a) (Id a) [Statement a] -- ^ defines a setter for a
                                           -- property, @set foo (x)
                                           -- {baz = x;}@
-  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
+  deriving (Read,Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
 
 -- | Left-hand side expressions: see spec 11.2
 -- data LValue a
 --   = LVar a String -- ^ variable reference, @foo@
 --   | LDot a (Expression a) String -- ^ @foo.bar@
 --   | LBracket a (Expression a) (Expression a) -- ^ @foo[bar]@
---   deriving (Show, Eq, Ord, Data, Typeable, Functor,Foldable,Traversable) 
+--   deriving (Read,Show, Eq, Ord, Data, Typeable, Functor,Foldable,Traversable) 
 
 -- | Expressions, see spec 11
 data Expression a
@@ -164,35 +164,35 @@ data Expression a
   --funcexprs are optionally named
   | FuncExpr a (Maybe (Id a)) [Id a] [Statement a]
     -- ^ @function f (x,y,z) {...}@, spec 11.2.5, 13
-  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
+  deriving (Read,Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
 
 -- | Case clauses, spec 12.11
 data CaseClause a = CaseClause a (Expression a) [Statement a]
                     -- ^ @case e: stmts;@
                   | CaseDefault a [Statement a]
                     -- ^ @default: stmts;@
-  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
+  deriving (Read,Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
 
 -- | Catch clause, spec 12.14
 data CatchClause a = CatchClause a (Id a) [Statement a]
                      -- ^ @catch (x) {...}@
-  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
+  deriving (Read,Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
 
 -- | A variable declaration, spec 12.2
 data VarDecl a = VarDecl a (Id a) (Maybe (Expression a)) 
                  -- ^ @var x = e;@
-  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
+  deriving (Read,Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
   
 -- | for initializer, spec 12.6
 data ForInit a = NoInit -- ^ empty
                | VarInit [VarDecl a] -- ^ @var x, y=42@
                | ExprInit (Expression a) -- ^ @expr@
-  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
+  deriving (Read,Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
 
 -- | for..in initializer, spec 12.6
 data ForInInit a = ForInVar (VarDecl a) -- ^ @var x@
                  | ForInExpr (Expression a) -- ^ @foo.baz@, @foo[bar]@, @z@
- deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
+ deriving (Read,Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
   
 -- | Statements, spec 12.
 data Statement a 
@@ -200,7 +200,7 @@ data Statement a
   | EmptyStmt a -- ^ @;@, spec 12.3
   | ExprStmt a (Expression a) -- ^ @expr;@, spec 12.4
   | IfStmt a (Expression a) (Statement a) (Statement a) 
-    -- ^ @if (e) stmt@, spec 12.5
+    -- ^ @if (e) then els@, spec 12.5
   | SwitchStmt a (Expression a) [CaseClause a]
     -- ^ @switch (e) clauses@, spec 12.11
   | WhileStmt a (Expression a) (Statement a)
@@ -232,7 +232,7 @@ data Statement a
   | FunctionStmt a (Id a) {-name-} [Id a] {-args-} [Statement a] {-body-}
     -- ^ @function f(x, y, z) {...}@, spec 13
   | DebuggerStmt a
-  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)  
+  deriving (Read,Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)  
 
 -- | Returns 'True' if the statement is an /IterationStatement/
 -- according to spec 12.6.

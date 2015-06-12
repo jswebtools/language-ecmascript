@@ -171,9 +171,9 @@ instance Show SourceSpan where
     c1 = show $ sourceColumn p1 - 1 
     l2 = show $ sourceLine p2 - 1 
     c2 = show $ sourceColumn p2 - 1 
-    s1 = l1 ++ "-" ++ c1 
-    s2 = l2 ++ "-" ++ c2 
-    in "(" ++ show (s1 ++ "/" ++ s2) ++ ")" 
+    s1 = l1 ++ "," ++ c1 
+    s2 = l2 ++ "," ++ c2 
+    in "(" ++ s1 ++ "--" ++ s2 ++ ")" 
  
 consumeComments :: (HasComments state) => Stream s Identity Char => ParsecT s state Identity [Comment] 
 consumeComments = do comments <- getComments <$> getState 
