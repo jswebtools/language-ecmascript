@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RankNTypes, ScopedTypeVariables #-}
 
 module Language.ECMAScript5.Parser (parse
                                    , PosParser
@@ -17,11 +17,13 @@ module Language.ECMAScript5.Parser (parse
 
 
 import Language.ECMAScript5.Lexer
-import Language.ECMAScript5.ParserState
+import Language.ECMAScript5.Parser.State
+import Language.ECMAScript5.Parser.Types
+
 
 import Language.ECMAScript5.Syntax
 import Language.ECMAScript5.Syntax.Annotations
-import Language.ECMAScript5.Parser.Util
+import Language.ECMAScript5.Parser.Combinators
 import Language.ECMAScript5.Parser.Unicode
 import Data.Default.Class
 import Data.Default.Instances.Base
@@ -45,13 +47,15 @@ import Control.Applicative ((<$>), (<*), (*>), (<*>), (<$))
 import Control.Arrow
 import Data.Maybe (fromJust, isNothing)
 
+import Lens.Simple
+
 -- | 7.9. Automatic Semicolon Insertion algorithm, rule 1; to be used
 -- in place of `semi` in parsers for emptyStatement,
 -- variableStatement, expressionStatement, doWhileStatement,
 -- continuteStatement, breakStatement, returnStatement and
 -- throwStatement.
 autoSemi :: Parser ()
-autoSemi = psemi <|> hadNewLine <|> lookAhead prbrace <|> eof
+autoSemi = psemi <|> expectNewLine <|> lookAhead prbrace <|> eof
 
 -- 11.1
 -- primary expressions
@@ -138,12 +142,12 @@ functionExpression = withPos $
   <*> inParens formalParameterList
   <*> withFreshEnclosing (inBraces functionBody)
 
-assignmentExpressionGen :: PosInParser Expression
+assignmentExpressionGen :: PosParser Expression
 assignmentExpressionGen = withPos $
   do l <- logicalOrExpressionGen
      assignment l <|> conditionalExpressionGen l <|> return l
   where
-    assignment :: Positioned Expression -> PosInParser Expression
+    assignment :: Positioned Expression -> PosParser Expression
     assignment l =
      do op <- liftIn True assignOp
         unless (validLHS l) $
@@ -177,7 +181,7 @@ assignmentExpression, assignmentExpressionNoIn :: PosParser Expression
 assignmentExpression     = withIn   assignmentExpressionGen
 assignmentExpressionNoIn = withNoIn assignmentExpressionGen
 
-conditionalExpressionGen :: Positioned Expression -> PosInParser Expression
+conditionalExpressionGen :: Positioned Expression -> PosParser Expression
 conditionalExpressionGen l = 
   CondExpr def l 
   <$  liftIn True pquestion 
@@ -185,9 +189,9 @@ conditionalExpressionGen l =
   <*  liftIn True pcolon
   <*> assignmentExpressionGen
   
-type InOp s = Operator s InParserState Identity (Positioned Expression)
+type InOp s = Operator s ParserState Identity (Positioned Expression)
 
-mkOp :: Show a => Parser a -> InParser a
+mkOp :: (Stream s Identity Char, Show a) => ParsecT s ParserState Identity a -> ParsecT s ParserState Identity a
 mkOp p = liftIn True $ try p
 
 makeInfixExpr :: Stream s Identity Char => Parser () -> InfixOp -> InOp s
@@ -200,17 +204,17 @@ inExpr =
 
 makePostfixExpr :: Stream s Identity Char => Parser () -> UnaryAssignOp -> InOp s
 makePostfixExpr str constr =
-  Postfix $ postfixWithPos $ UnaryAssignExpr def constr <$ (liftIn True hadNoNewLine >> mkOp str)
+  Postfix $ postfixWithPos $ UnaryAssignExpr def constr <$ (liftIn True expectNoNewLine >> mkOp str)
 
 makePrefixExpr :: Stream s Identity Char => Parser () -> UnaryAssignOp -> InOp s
 makePrefixExpr str constr =
   Prefix $ prefixWithPos $ UnaryAssignExpr def constr <$ mkOp str
 
+makeUnaryExpr :: forall s. Stream s Identity Char => [(ParsecT s ParserState Identity (), PrefixOp)] -> InOp s
 makeUnaryExpr pfxs =
-  let mkPrefix :: Parser () -> PrefixOp -> InParser (Positioned Expression -> Positioned Expression)
+  let mkPrefix :: ParsecT s ParserState Identity () -> PrefixOp -> ParsecT s ParserState Identity (Positioned Expression -> Positioned Expression)
       mkPrefix p op = PrefixExpr def op <$ mkOp p
-  in  
-    Prefix $ makePrefix (map (prefixWithPos . uncurry mkPrefix) pfxs)
+  in  Prefix $ makePrefix (map (prefixWithPos . uncurry mkPrefix) pfxs)
 
 exprTable:: Stream s Identity Char => [[InOp s]]
 exprTable =
@@ -260,9 +264,9 @@ exprTable =
   ]
 
 
-logicalOrExpressionGen :: PosInParser Expression
+logicalOrExpressionGen :: PosParser Expression
 logicalOrExpressionGen = withPos $
-  do inAllowed <- allowIn <$> getState
+  do inAllowed <- view allowIn <$> getState
      buildExpressionParser exprTable (liftIn inAllowed leftHandSideExpression) <?> "simple expression"
 
 -- avoid putting comma expression on everything
@@ -432,7 +436,7 @@ restricted :: (HasAnnotation e)
 restricted keyword constructor null parser =
   withPos $
   do wsSt <- keyword 
-     rest <- if fst wsSt
+     rest <- if wsSt ^. hadNewLine
        then null
        else parser
      autoSemi
@@ -446,7 +450,7 @@ validatedRestricted :: (HasAnnotation e)
 validatedRestricted keyword constructor null parser =
   withPos $
   do wsSt <- keyword 
-     rest <- if fst wsSt
+     rest <- if wsSt ^. hadNewLine
        then null
        else parser
      result <- constructor def rest

@@ -23,9 +23,10 @@ module Language.ECMAScript5.Lexer
        ) where
 
 import Text.Parsec 
-import Language.ECMAScript5.Parser.Util
+import Language.ECMAScript5.Parser.Combinators
 import Language.ECMAScript5.Parser.Unicode
-import Language.ECMAScript5.ParserState
+import Language.ECMAScript5.Parser.State
+import Language.ECMAScript5.Parser.Types
 
 import Language.ECMAScript5.Syntax
 import Data.Default.Class
@@ -38,6 +39,7 @@ import Numeric(readDec,readOct,readHex,readFloat)
 import Control.Monad.Identity
 import Control.Applicative ((<$>), (<*), (*>), (<*>), (<$))
 import Data.Int (Int32)
+import Lens.Simple
 
 lexeme :: Show a => Parser a -> Parser a
 lexeme p = p <* ws
@@ -47,7 +49,8 @@ lexeme p = p <* ws
 ws :: Parser WhiteSpaceState
 ws = do pos <- getPosition
         isNewLine <- many (False <$ whiteSpace <|> False <$ comment <|> True <$ lineTerminator)
-        setNewLineState (any id isNewLine, pos)
+        modifyState $ over whiteSpaceState $ (hadNewLine .~ any id isNewLine) . (whiteStart .~ pos)
+        view whiteSpaceState <$> getState
   where whiteSpace :: Parser ()
         whiteSpace = forget $ choice [uTAB, uVT, uFF, uSP, uNBSP, uBOM, uUSP]
 
@@ -69,17 +72,21 @@ singleLineCommentChar  = notFollowedBy lineTerminator *> noneOf ""
 
 multiLineComment :: Parser String
 multiLineComment = 
-  do string "/*"
+  do start <- getPosition
+     string "/*"
      comment <- concat <$> many insideMultiLineComment
      string "*/"
-     modifyState $ modifyComments (MultiLineComment comment:)
+     end <- getPosition
+     modifyState $ over currentComments (MultiLineComment (SourceSpan start end) comment:)
      return comment
 
 singleLineComment :: Parser String
 singleLineComment = 
-  do string "//" 
+  do start <- getPosition
+     string "//" 
      comment <- many singleLineCommentChar
-     modifyState $ modifyComments (SingleLineComment comment :)
+     end <- getPosition
+     modifyState $ over currentComments (SingleLineComment (SourceSpan start end) comment :)
      return comment
 
 insideMultiLineComment :: Parser [Char]

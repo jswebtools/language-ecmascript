@@ -19,6 +19,11 @@ module Language.ECMAScript5.Syntax (Program(..)
                                    ,UnaryAssignOp(..)
                                    ,PropAssign(..)
                                    ,Number
+                                   ,HasLabelSet(..)
+                                   ,Label
+                                   ,EnclosingStatement(..)
+                                   ,isIter
+                                   ,isIterSwitch
                                    ) where
 
 import Text.Parsec.Pos(initialPos,SourcePos) -- used by data JavaScript
@@ -244,3 +249,46 @@ isIterationStmt s = case s of
   ForInStmt {} -> True
   _                 -> False
   
+data EnclosingStatement = EnclosingIter [Label]
+                          -- ^ The enclosing statement is an iteration statement
+                        | EnclosingSwitch [Label]
+                          -- ^ The enclosing statement is a switch statement
+                        | EnclosingOther [Label]
+                          -- ^ The enclosing statement is some other
+                          -- statement.  Note, `EnclosingOther` is
+                          -- never pushed if the current `labelSet` is
+                          -- empty, so the list of labels in this
+                          -- constructor should always be non-empty
+
+instance Show EnclosingStatement where
+  show (EnclosingIter ls)   = "iteration" ++ show ls
+  show (EnclosingSwitch ls) = "switch" ++ show ls
+  show (EnclosingOther ls)  = "statement" ++ show ls
+
+isIter :: EnclosingStatement -> Bool
+isIter (EnclosingIter _) = True
+isIter _                 = False
+
+isIterSwitch :: EnclosingStatement -> Bool
+isIterSwitch (EnclosingIter _)   = True
+isIterSwitch (EnclosingSwitch _) = True
+isIterSwitch _                   = False
+
+class HasLabelSet a where
+  getLabelSet :: a -> [Label]
+  setLabelSet :: [Label] -> a -> a
+
+modifyLabelSet :: HasLabelSet a => ([Label] -> [Label]) -> a -> a
+modifyLabelSet f a = setLabelSet (f $ getLabelSet a) a
+
+instance HasLabelSet EnclosingStatement where
+  getLabelSet e = case e of
+    EnclosingIter ls   -> ls
+    EnclosingSwitch ls -> ls
+    EnclosingOther ls  -> ls
+  setLabelSet ls e = case e of
+    EnclosingIter _   -> EnclosingIter ls
+    EnclosingSwitch _ -> EnclosingSwitch ls
+    EnclosingOther _  -> EnclosingOther ls
+
+type Label = String

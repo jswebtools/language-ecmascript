@@ -44,10 +44,10 @@ Library
     uniplate >= 1.6 && <1.7,
     data-default-class >= 0.0.1 && < 0.1,
     data-default-instances-base >= 0.0.1 && < 0.1,
-    QuickCheck >= 2.5 && < 2.6,
+    QuickCheck == 2.8.*,
     template-haskell,
     Diff == 0.3.*,
-    lens == 4.*
+    lens-simple == 0.1.*
   ghc-options:
     -fwarn-incomplete-patterns
   Exposed-Modules:
@@ -70,11 +70,10 @@ Library
     Language.ECMAScript5.PrettyPrint
     Language.ECMAScript5.Syntax.Annotations
     Language.ECMAScript5.Lexer
-    Language.ECMAScript5.ParserState
-    Language.ECMAScript3.Parser.Type
-    Language.ECMAScript3.Parser.State
+    Language.ECMAScript5.Parser.Types
+    Language.ECMAScript5.Parser.State
     Language.ECMAScript5.Parser.Unicode
-    Language.ECMAScript5.Parser.Util
+    Language.ECMAScript5.Parser.Combinators
     Language.ECMAScript5.SourceDiff
   Default-Extensions:
     DeriveDataTypeable, ScopedTypeVariables, DeriveFunctor, DeriveFoldable, DeriveTraversable, FlexibleContexts
@@ -98,9 +97,9 @@ Test-Suite test
     containers >= 0.1 && < 0.6,
     directory,
     filepath,
-    tasty == 0.3.*, 
-    tasty-hunit == 0.2.*,
-    tasty-quickcheck == 0.3.*,
+    tasty == 0.10.*, 
+    tasty-hunit == 0.9.*,
+    tasty-quickcheck == 0.8.*,
     data-default-class >= 0.0.1 && < 0.1,
     Diff == 0.3.*,
     language-ecmascript
