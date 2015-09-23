@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RankNTypes, ImpredicativeTypes #-}
 
 module Language.ECMAScript5.Parser (parse
                                    , PosParser

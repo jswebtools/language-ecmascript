@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances, UndecidableInstances, CPP #-}
 
 -- |Pretty-printing JavaScript.
 module Language.ECMAScript5.PrettyPrint (Pretty (..)
@@ -6,7 +6,11 @@ module Language.ECMAScript5.PrettyPrint (Pretty (..)
 
 import Text.PrettyPrint.Leijen hiding (Pretty)
 import Language.ECMAScript5.Syntax
+#if __GLASGOW_HASKELL__ > 708
+import Prelude hiding (maybe, (<$>))
+#else 
 import Prelude hiding (maybe)
+#endif
 
 -- | A class of pretty-printable ECMAScript AST nodes.
 class Pretty a where
