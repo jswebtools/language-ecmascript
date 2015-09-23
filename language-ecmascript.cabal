@@ -44,7 +44,7 @@ Library
     uniplate >= 1.6 && <1.7,
     data-default-class >= 0.0.1 && < 0.1,
     data-default-instances-base >= 0.0.1 && < 0.1,
-    QuickCheck >= 2.5 && < 2.6,
+    QuickCheck >= 2.5 && < 2.9,
     template-haskell,
     Diff == 0.3.*
   ghc-options:
@@ -97,9 +97,9 @@ Test-Suite test
     containers >= 0.1 && < 0.6,
     directory,
     filepath,
-    tasty == 0.3.*, 
-    tasty-hunit == 0.2.*,
-    tasty-quickcheck == 0.3.*,
+    tasty == 0.11.*, 
+    tasty-hunit == 0.9.*,
+    tasty-quickcheck == 0.8.*,
     data-default-class >= 0.0.1 && < 0.1,
     Diff == 0.3.*,
     language-ecmascript
