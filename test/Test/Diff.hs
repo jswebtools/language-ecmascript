@@ -3,11 +3,11 @@ module Test.Diff where
 import System.Exit
 import System.Directory
 import qualified System.FilePath as FP
-import Language.ECMAScript3.Parser
-import Language.ECMAScript3.PrettyPrint
-import Language.ECMAScript3.Syntax
-import Language.ECMAScript3.Syntax.Annotations
-import Language.ECMAScript3.SourceDiff
+import Language.ECMAScript5.Parser
+import Language.ECMAScript5.PrettyPrint
+import Language.ECMAScript5.Syntax
+import Language.ECMAScript5.Syntax.Annotations
+import Language.ECMAScript5.SourceDiff
 import Control.Monad
 
 import Test.Tasty

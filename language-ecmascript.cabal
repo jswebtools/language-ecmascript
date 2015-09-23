@@ -50,28 +50,15 @@ Library
   ghc-options:
     -fwarn-incomplete-patterns
   Exposed-Modules:
-    Language.ECMAScript3 
-    Language.ECMAScript3.Lexer 
-    Language.ECMAScript3.Parser
-    Language.ECMAScript3.PrettyPrint
-    Language.ECMAScript3.Syntax
-    Language.ECMAScript3.Syntax.Annotations
-    Language.ECMAScript3.Syntax.Arbitrary
-    Language.ECMAScript3.Syntax.QuasiQuote
-    Language.ECMAScript3.Analysis.Environment
-    Language.ECMAScript3.Analysis.LabelSets
-    Language.ECMAScript3.SourceDiff
     Language.ECMAScript5
     Language.ECMAScript5.Syntax
     Language.ECMAScript5.Syntax.Arbitrary
-    --Language.ECMAScript5.Syntax.QuasiQuote
+    Language.ECMAScript5.Syntax.QuasiQuote
     Language.ECMAScript5.Parser
     Language.ECMAScript5.PrettyPrint
     Language.ECMAScript5.Syntax.Annotations
     Language.ECMAScript5.Lexer
     Language.ECMAScript5.ParserState
-    Language.ECMAScript3.Parser.Type
-    Language.ECMAScript3.Parser.State
     Language.ECMAScript5.Parser.Unicode
     Language.ECMAScript5.Parser.Util
     Language.ECMAScript5.SourceDiff
