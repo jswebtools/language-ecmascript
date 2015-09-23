@@ -59,7 +59,6 @@ instance HasAnnotation Expression where
    (StringLit a s)              -> a
    (RegexpLit a s g i m)        -> a
    (NumLit a d)                 -> a
---   (IntLit a i)                 -> a
    (BoolLit a b)                -> a
    (NullLit a)                  -> a
    (ArrayLit a exps)            -> a
@@ -81,7 +80,6 @@ instance HasAnnotation Expression where
     (StringLit _ s)              -> (StringLit a s)
     (RegexpLit _ s g i m)        -> (RegexpLit a s g i m)
     (NumLit _ d)                 -> (NumLit a d)
---    (IntLit _ i)                 -> (IntLit a i)
     (BoolLit _ b)                -> (BoolLit a b)
     (NullLit _)                  -> (NullLit a)
     (ArrayLit _ exps)            -> (ArrayLit a exps)
@@ -99,7 +97,6 @@ instance HasAnnotation Expression where
     (CommaExpr _ es)             -> (CommaExpr a es)
     (CallExpr _ fn params)       -> (CallExpr a fn params)
     (FuncExpr _ mid args s)      -> (FuncExpr a mid args s)
-    x -> x
 
 instance HasAnnotation Statement where
   getAnnotation s = case s of
