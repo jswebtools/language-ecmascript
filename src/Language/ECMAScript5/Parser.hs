@@ -19,7 +19,7 @@ module Language.ECMAScript5.Parser (parse
 import Language.ECMAScript5.Lexer
 import Language.ECMAScript5.ParserState
 
-import Language.ECMAScript5.Syntax
+import Language.ECMAScript5.Syntax hiding (pushEnclosing, pushLabel)
 import Language.ECMAScript5.Syntax.Annotations
 import Language.ECMAScript5.Parser.Util
 import Language.ECMAScript5.Parser.Unicode
@@ -99,7 +99,7 @@ propertyAssignment = withPos $
                   <|>(do pname <- propertyName
                          pcolon
                          e <- assignmentExpression
-                         return $ PExpr def pname e)
+                         return $ PValue def pname e)
 
 propertyName :: Parser (Positioned Prop)
 propertyName = withPos $
@@ -322,7 +322,7 @@ statementList = many (withPos parseStatement)
 
 parseBlock :: PosParser Statement
 parseBlock =
-  withPos $ inBraces $ pushEnclosing EnclosingOther >>
+  withPos $ inBraces $ (pushEnclosing EnclosingOther) >>
   BlockStmt def <$> statementList <* popEnclosing
 
 variableStatement :: PosParser Statement

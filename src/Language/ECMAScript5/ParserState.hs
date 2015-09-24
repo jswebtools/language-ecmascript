@@ -26,9 +26,7 @@ module Language.ECMAScript5.ParserState
        , modifyNewLine
        , modifyLabelSet
        , modifyComments
-       , pushLabel
        , clearLabelSet
-       , pushEnclosing
        , popEnclosing
        , withFreshEnclosing
        , setNewLineState 
@@ -42,12 +40,14 @@ module Language.ECMAScript5.ParserState
        , spanBegin
        , spanEnd
        , WhiteSpaceState
+       , pushEnclosing
+       , pushLabel
        ) where 
  
 import Text.Parsec hiding (labels) 
 import Text.Parsec.Pos (initialPos)
 import Text.Parsec.Prim
-import Language.ECMAScript5.Syntax 
+import Language.ECMAScript5.Syntax hiding (pushEnclosing, pushLabel)
 import Language.ECMAScript5.Syntax.Annotations 
 import Data.Default.Class 
 import Data.Default.Instances.Base 
@@ -70,48 +70,6 @@ type WhiteSpaceState = (Bool, SourcePos)
 data ParserState = ParserState { whiteSpaceState :: WhiteSpaceState, comments :: [Comment], enclosing :: [EnclosingStatement], labelSet :: [Label] }
                  deriving (Show)
 data InParserState = InParserState { allowIn :: Bool, baseState :: ParserState } 
-
-data EnclosingStatement = EnclosingIter [Label]
-                          -- ^ The enclosing statement is an iteration statement
-                        | EnclosingSwitch [Label]
-                          -- ^ The enclosing statement is a switch statement
-                        | EnclosingOther [Label]
-                          -- ^ The enclosing statement is some other
-                          -- statement.  Note, `EnclosingOther` is
-                          -- never pushed if the current `labelSet` is
-                          -- empty, so the list of labels in this
-                          -- constructor should always be non-empty
-
-instance Show EnclosingStatement where
-  show (EnclosingIter ls)   = "iteration" ++ show ls
-  show (EnclosingSwitch ls) = "switch" ++ show ls
-  show (EnclosingOther ls)  = "statement" ++ show ls
-
-isIter :: EnclosingStatement -> Bool
-isIter (EnclosingIter _) = True
-isIter _                 = False
-
-isIterSwitch :: EnclosingStatement -> Bool
-isIterSwitch (EnclosingIter _)   = True
-isIterSwitch (EnclosingSwitch _) = True
-isIterSwitch _                   = False
-
-class HasLabelSet a where
-  getLabelSet :: a -> [Label]
-  setLabelSet :: [Label] -> a -> a
-
-modifyLabelSet :: HasLabelSet a => ([Label] -> [Label]) -> a -> a
-modifyLabelSet f a = setLabelSet (f $ getLabelSet a) a
-
-instance HasLabelSet EnclosingStatement where
-  getLabelSet e = case e of
-    EnclosingIter ls   -> ls
-    EnclosingSwitch ls -> ls
-    EnclosingOther ls  -> ls
-  setLabelSet ls e = case e of
-    EnclosingIter _   -> EnclosingIter ls
-    EnclosingSwitch _ -> EnclosingSwitch ls
-    EnclosingOther _  -> EnclosingOther ls
 
 instance HasLabelSet ParserState where
   getLabelSet ps = labelSet ps
@@ -262,6 +220,8 @@ pushLabel ident = do ps <- getState
                      if lab `elem` labs 
                        then fail $ "Duplicate label at " ++ show pos 
                        else putState (ps {labelSet = (lab:(labelSet ps))}) >> return ident
+
+modifyLabelSet f a = setLabelSet (f $ getLabelSet a) a
 
 clearLabelSet :: Parser ()
 clearLabelSet = modifyState $ modifyLabelSet (const [])

@@ -172,10 +172,10 @@ instance HasAnnotation Id where
   
 instance HasAnnotation PropAssign where
   getAnnotation p = case p of
-    PExpr a _ _   -> a
+    PValue a _ _   -> a
     PGet  a _ _   -> a
     PSet  a _ _ _ -> a
   setAnnotation a p = case p of
-    PExpr _ pr e    -> PExpr a pr e
+    PValue _ pr e    -> PValue a pr e
     PGet  _ pr b    -> PGet a pr b
     PSet  _ pr id b -> PSet a pr id b

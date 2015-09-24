@@ -269,7 +269,7 @@ ppArrayElement = maybe (ppAssignmentExpression True)
 
 instance Pretty (PropAssign a) where
   prettyPrint pa = case pa of
-    PExpr _ p e       -> prettyPrint p <> colon <+> ppAssignmentExpression True e
+    PValue _ p e       -> prettyPrint p <> colon <+> ppAssignmentExpression True e
     PGet  _ p body    -> text "get" <+> prettyPrint p <> parens empty <+> asBlock body
     PSet  _ p id body -> text "set" <+> prettyPrint p <> parens (prettyPrint id) <+> asBlock body
 
