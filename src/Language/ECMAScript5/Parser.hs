@@ -79,8 +79,7 @@ elementsListWithElision = optionMaybe assignmentExpression `sepBy` pcomma
 objectLiteral :: PosParser Expression
 objectLiteral = withPos $
                 ObjectLit def
-                <$> inBraces (
-                  propertyAssignment `sepBy` pcomma <* optional pcomma)
+                <$> inBraces (propertyAssignment `sepEndBy` pcomma)
 
 
 propertyAssignment :: PosParser PropAssign
