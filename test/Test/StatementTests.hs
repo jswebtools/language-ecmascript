@@ -225,9 +225,6 @@ unitTests runTest =
        expectedParseFail "continue-wrong-label-scope" (2, 26)
   $: testCase "Break with the wrong label scope (extra ;)" $$
        expectedParseFail "label-set" (3,11)
-  $: testCase "Function statement in a while-loop body (regression from QuickCheck tests)" $$
-       runTest "while-func-stmt"
-       [ReturnStmt () Nothing,WhileStmt () (NumLit () $ Left 0) (FunctionStmt () (Id () "n") [] [])]
   $: testCase "Non-reference left-hand-sides can be parsed" $$
        runTest "non-ref-lhs"
        [ExprStmt () $ AssignExpr () OpAssign (StringLit () "foo") (NumLit () $ Left 1)
