@@ -72,7 +72,6 @@ Test-Suite test
   Main-Is: TestMain.hs
   Other-Modules:
     Test.Diff
-    Test.Unit
     Test.Pretty
     Test.StatementTests
     Test.ExpressionTests
