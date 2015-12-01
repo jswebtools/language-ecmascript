@@ -225,10 +225,6 @@ unitTests runTest =
        expectedParseFail "continue-wrong-label-scope" (2, 26)
   $: testCase "Break with the wrong label scope (extra ;)" $$
        expectedParseFail "label-set" (3,11)
-  $: testCase "Non-reference left-hand-sides can be parsed" $$
-       runTest "non-ref-lhs"
-       [ExprStmt () $ AssignExpr () OpAssign (StringLit () "foo") (NumLit () $ Left 1)
-       ,ExprStmt () $ AssignExpr () OpAssignAdd (InfixExpr () OpAdd (VarRef () $ Id () "a") (VarRef () $ Id () "b")) (InfixExpr () OpMul (NumLit () $ Left 4) (VarRef () $ Id () "c"))]
   $: testCase "Expressions prohibited by the grammar to occur as targets of assignments (LeftHandSideExpression restriction)" $$
        expectedParseFail "bad-lhs" (1, 9)
   $: testCase "Number parsing" $$
