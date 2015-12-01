@@ -28,9 +28,9 @@ tests_diff =
        where getValidJS = filter $ \x -> FP.takeExtension x == ".js"
              getValidDiffs = filter $ \x -> FP.takeExtension x == ".diff"
 
-leftDir = "test/diff/left"
-rightDir = "test/diff/right"
-expectsDir = "test/diff/expects"
+leftDir = "test-data/diff/left"
+rightDir = "test-data/diff/right"
+expectsDir = "test-data/diff/expects"
 
 genTest :: FilePath -> TestTree
 genTest testFileName = testCase testFileName $

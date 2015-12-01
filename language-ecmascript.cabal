@@ -12,7 +12,7 @@ Homepage:       http://github.com/jswebtools/language-ecmascript
 Bug-reports:    http://github.com/jswebtools/language-ecmascript/issues
 Stability:      experimental
 Tested-with:    GHC==7.6.3
-Extra-Source-Files: test/parse-pretty/*.js, test/diff/left/*.js, test/diff/right/*.js, test/diff/expects/*.diff, CHANGELOG
+Extra-Source-Files: test-data/diff/left/*.js, test-data/diff/right/*.js, test-data/diff/expects/*.diff, test-data/*.js, CHANGELOG
 Category:       Language
 Build-Type:     Simple
 Synopsis:       JavaScript parser and pretty-printer library
