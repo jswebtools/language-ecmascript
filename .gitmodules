@@ -2,3 +2,9 @@
 	path = test-data/test262-es5
 	url = https://github.com/tc39/test262.git
 	branch = es5-tests
+[submodule "util/language-ecmascript-testgen"]
+	path = util/language-ecmascript-testgen
+	url = https://github.com/jswebtools/language-ecmascript-testgen.git
+[submodule "util/mozilla-js-parser-api"]
+	path = util/mozilla-js-parser-api
+	url = https://github.com/jswebtools/mozilla-js-parser-api.git
