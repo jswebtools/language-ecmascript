@@ -1,0 +1,4 @@
+[submodule "test-data/test262-es5"]
+	path = test-data/test262-es5
+	url = https://github.com/tc39/test262.git
+	branch = es5-tests

@@ -7,6 +7,7 @@ import Test.Diff
 import Test.Pretty
 import Test.StatementTests
 import Test.ExpressionTests
+import Test.Reference
           
 main = do tests_ecmascript5_diff <- tests_diff
           let propertytest_ecmascript5_pretty = tests_pretty

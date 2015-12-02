@@ -79,7 +79,7 @@ type Label = String
 
 data SourceSpan =  
   SourceSpan (SourcePos, SourcePos)
-  deriving (Data, Typeable)
+  deriving (Data, Typeable, Eq)
 
 spanBegin :: SourceSpan -> SourcePos
 spanBegin (SourceSpan (b, _)) = b
@@ -90,7 +90,7 @@ spanEnd (SourceSpan (_, e)) = e
 data Comment  
   = SingleLineComment String  
   | MultiLineComment String  
-    deriving (Show, Data, Typeable)
+    deriving (Show, Data, Typeable, Eq)
  
 class HasWhiteSpacePos a where
   getWhiteSpaceStartPos :: a -> SourcePos
