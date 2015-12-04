@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, ImpredicativeTypes #-}
+{-# LANGUAGE Rank2Types, ImpredicativeTypes, StandaloneDeriving #-}
 module Language.ECMAScript5.ParserState 
        ( Comment(..)
        , SourceSpan(..) 
@@ -42,6 +42,8 @@ module Language.ECMAScript5.ParserState
        , WhiteSpaceState
        , pushEnclosing
        , pushLabel
+       , SrcLoc (..)
+       , toSrcLoc
        ) where 
  
 import Text.Parsec hiding (labels) 
@@ -80,12 +82,27 @@ type Label = String
 data SourceSpan =  
   SourceSpan (SourcePos, SourcePos)
   deriving (Data, Typeable, Eq)
+         
 
 spanBegin :: SourceSpan -> SourcePos
 spanBegin (SourceSpan (b, _)) = b
 
 spanEnd :: SourceSpan -> SourcePos
 spanEnd (SourceSpan (_, e)) = e
+
+-- | machine-readable source locations
+data SrcLoc = SrcLoc (Int, Int, Int, Int, Maybe String)
+            | NoLoc
+            deriving (Show, Read)
+
+instance Eq (SrcLoc) where
+  NoLoc == _ = True
+  _     == NoLoc = True
+  (SrcLoc (sl1, sc1, el1, ec1, msrc1)) == (SrcLoc (sl2, sc2, el2, ec2, msrc2)) =
+    sl1 == sl2 && sc1 == sc2 && el1 == el2 && ec1 == ec2 && msrc1 == msrc2
+
+toSrcLoc :: SourceSpan -> SrcLoc
+toSrcLoc (SourceSpan (start, end)) = SrcLoc (sourceLine start, sourceColumn start, sourceLine end, sourceColumn end, Just $ sourceName start)
 
 data Comment  
   = SingleLineComment String  
@@ -131,7 +148,7 @@ instance Show SourceSpan where
     c2 = show $ sourceColumn p2 - 1 
     s1 = l1 ++ "," ++ c1 
     s2 = l2 ++ "," ++ c2 
-    in "(" ++ s1 ++ "--" ++ s2 ++ ")" 
+    in "(" ++ s1 ++ "--" ++ s2 ++ ")"
  
 consumeComments :: (HasComments state) => Stream s Identity Char => ParsecT s state Identity [Comment] 
 consumeComments = do comments <- getComments <$> getState 

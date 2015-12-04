@@ -2,10 +2,6 @@
 -- SpiderMonkey Parser API
 module Test.Reference where
 
-import qualified Language.JavaScript.SpiderMonkey.Parser as JS (Program)
-import Language.JavaScript.SpiderMonkey.Parser hiding (Program)
-import Text.Parsec.Pos
-import Data.Aeson
 import qualified Data.ByteString.Lazy as LBS
 import Test.Tasty
 import Test.Tasty.Golden.Advanced
@@ -19,50 +15,36 @@ import Data.Maybe
 import Language.ECMAScript5.Parser
 import Language.ECMAScript5.ParserState
 import Language.ECMAScript5.Syntax
+import Language.ECMAScript5.Syntax.Annotations
 import Language.ECMAScript5.SourceDiff
 
-casesDir = "test-data/test262-es5/test/suite"
-parseTreesDir = "test-data/test262-es5/parseTrees"
+casesDir = "test-data/t262/"
 
-test_rewriting :: IO TestTree
-test_rewriting = 
-               do allCases <- getDirectoryContents casesDir
-                  allExpects <- getDirectoryContents parseTreesDir
-                  let validCases   = getValid "js" allCases
-                  let validExpects = getValid "json" allExpects
+test_reference :: IO TestTree
+test_reference = 
+               do fns <- getDirectoryContents casesDir
+                  let validCases   = getValid "js" fns
+                  let validExpects = getValid "parse" fns
                   return $ testGroup "Parser reference test-suite" $
-                    map genTest $ filter (`elem` validExpects) validCases
+                    map genTest $ filter
+                    (\f -> (FP.dropExtension f) `elem` (map FP.dropExtension validExpects)) validCases
                     where getValid ext = filter $ \x -> FP.takeExtension x == '.':ext
 
 genTest :: FilePath -> TestTree
 genTest test =
   let caseFileName = casesDir `FP.combine` test
-      parseTreeFileName = parseTreesDir `FP.combine` test
-  in goldenTest test (liftIO $ decodeFromFile parseTreeFileName >>= (maybeToFail "Can't convert the parse tree to AST" . toLEP))
-                     (liftIO $ parseFromFile caseFileName)
-                     verifyOutput
-                     (const $ return ())
+      parseTreeFileName = casesDir `FP.combine` (FP.replaceExtension test ".parse")
+      loadParseTree :: IO (Maybe (Program SrcLoc))
+      loadParseTree = liftIO $ liftM read $ readFile parseTreeFileName
+      parseCase     :: IO (Maybe (Program SrcLoc))
+      parseCase     = liftIO $ liftM (either (const Nothing) (Just . reannotate (toSrcLoc . fst)) . parse program caseFileName) $ readFile caseFileName 
+  in  goldenTest test loadParseTree parseCase verifyOutput (const $ return ())
 
-verifyOutput :: Positioned Program -> Positioned Program -> IO (Maybe String)
+verifyOutput :: Maybe (Program SrcLoc) -> Maybe (Program SrcLoc) -> IO (Maybe String)
 verifyOutput expected actual = if expected == actual then return Nothing
-                               else return $ Just $ jsDiff expected actual
-
-decodeFromFile :: FromJSON a => FilePath -> IO a
-decodeFromFile = LBS.readFile >=> (maybeToFail "Can't parse the parse tree JSON" . decode)
-
-maybeToFail :: Monad m => String -> Maybe a -> m a
-maybeToFail err = maybe (fail err) return
-
--- Translation from JS Parser API AST to our AST data type
-toLEP :: JS.Program -> Maybe (Positioned Program)
-toLEP prg = liftM (Program (convertLoc $ loc prg, [])) $ mapM convertStatement (body prg)
-
-ii32 = fromInteger . toInteger
-
-convertLoc :: SourceLocation -> SourceSpan
-convertLoc srcloc = SourceSpan (newPos (fromMaybe "" $ source srcloc) (ii32 $ line $ start srcloc)
-                               (ii32 $ column $ start srcloc)
-                               ,newPos (fromMaybe "" $ source srcloc) (ii32 $ line $ end srcloc)
-                               (ii32 $ column $ end srcloc))
-
-convertStatement = undefined
+                               else return $ Just $
+                                    if isNothing expected
+                                    then "Expected a parse failure, but succeeded"
+                                    else if isNothing actual
+                                         then "Unexpected parse failure"
+                                         else jsDiff (fromJust expected) (fromJust actual)

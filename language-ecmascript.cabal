@@ -90,7 +90,6 @@ Test-Suite test
     tasty-golden == 2.3.*,
     data-default-class >= 0.0.1 && < 0.1,
     Diff == 0.3.*,
-    mozilla-js-parser-api,
     transformers,
     aeson,
     bytestring,

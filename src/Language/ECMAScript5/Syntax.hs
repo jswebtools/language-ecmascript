@@ -45,7 +45,7 @@ import Control.Arrow
 
 -- | The complete program
 data Program a = Program a [Statement a] 
-  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable)
+  deriving (Show,Data,Typeable,Eq,Ord,Functor,Foldable,Traversable,Read)
 
 instance Default a => Default (Program a) where
   def = Program def []
@@ -441,3 +441,4 @@ instance HasLabelSet EnclosingStatement where
     EnclosingOther _  -> EnclosingOther ls
 
 type Label = String
+

@@ -4,5 +4,7 @@ cabal update
 cabal sandbox add-source ../mozilla-js-parser-api/
 cabal sandbox add-source ../../
 cabal install
+cabal configure
+cabal build
 cd ..
-ln -s testgen language-ecmascript-test/dist/build/language-ecmascript-testgen/language-ecmascript-testgen
+cp language-ecmascript-testgen/dist/build/language-ecmascript-testgen/language-ecmascript-testgen ./testgen
