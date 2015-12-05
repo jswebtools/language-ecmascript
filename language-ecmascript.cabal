@@ -93,6 +93,7 @@ Test-Suite test
     transformers,
     aeson,
     bytestring,
+    groom,
     language-ecmascript
   Default-Extensions: DeriveDataTypeable, ScopedTypeVariables, DeriveFunctor, DeriveFoldable, DeriveTraversable, FlexibleContexts
   Default-Language: Haskell2010

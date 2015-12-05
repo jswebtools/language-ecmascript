@@ -16,7 +16,10 @@ import Language.ECMAScript5.Parser
 import Language.ECMAScript5.ParserState
 import Language.ECMAScript5.Syntax
 import Language.ECMAScript5.Syntax.Annotations
-import Language.ECMAScript5.SourceDiff
+--import Language.ECMAScript5.SourceDiff
+import Text.Groom
+import Data.Algorithm.Diff
+import Data.Algorithm.DiffOutput
 
 casesDir = "test-data/t262/"
 
@@ -41,10 +44,10 @@ genTest test =
   in  goldenTest test loadParseTree parseCase verifyOutput (const $ return ())
 
 verifyOutput :: Maybe (Program SrcLoc) -> Maybe (Program SrcLoc) -> IO (Maybe String)
-verifyOutput expected actual = if expected == actual then return Nothing
-                               else return $ Just $
-                                    if isNothing expected
-                                    then "Expected a parse failure, but succeeded"
-                                    else if isNothing actual
-                                         then "Unexpected parse failure"
-                                         else jsDiff (fromJust expected) (fromJust actual)
+verifyOutput expected actual =
+  let plines = lines . groom
+  in if (removeAnnotations expected) == (removeAnnotations actual) then return Nothing
+     else return $ Just $ ppDiff $ getGroupedDiff (plines $ removeAnnotations expected) (plines $ removeAnnotations actual)
+
+noSrcFile (SrcLoc (a,b,c,d,_)) = SrcLoc (a,b,c,d,Nothing)
+noSrcFile NoLoc = NoLoc
