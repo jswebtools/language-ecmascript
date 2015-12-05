@@ -46,8 +46,12 @@ genTest test =
 verifyOutput :: Maybe (Program SrcLoc) -> Maybe (Program SrcLoc) -> IO (Maybe String)
 verifyOutput expected actual =
   let plines = lines . groom
-  in if (removeAnnotations expected) == (removeAnnotations actual) then return Nothing
-     else return $ Just $ ppDiff $ getGroupedDiff (plines $ removeAnnotations expected) (plines $ removeAnnotations actual)
+      dexp :: Maybe (Program ())
+      dexp  = removeAnnotations <$> expected
+      dact :: Maybe (Program ())
+      dact  = removeAnnotations <$> actual
+  in if dexp == dact then return Nothing
+     else return $ Just $ ppDiff $ getGroupedDiff (plines dexp) (plines dact)
 
 noSrcFile (SrcLoc (a,b,c,d,_)) = SrcLoc (a,b,c,d,Nothing)
 noSrcFile NoLoc = NoLoc
