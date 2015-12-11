@@ -9,10 +9,14 @@ mkdir -p ../test-data/t262/
 for tcn in $(find ../test-data/test262-es5/test/suite/ -name *.js) 
 do
    fn=$(basename $tcn)
-   cp $tcn ../test-data/t262/${fn}
-   echo "Converting $fn"
-   js24 -e "try{var p = Reflect.parse(read(\"../test-data/t262/${fn}\"));
+   if LANG=C grep -m 1 -F "${fn}" ../test-data/test262ignore; then
+       continue
+   else
+       cp $tcn ../test-data/t262/${fn}
+       echo "Converting $fn"
+       js24 -e "try{var p = Reflect.parse(read(\"../test-data/t262/${fn}\"));
                 print(JSON.stringify(p))}
-            catch (ex) {print(\"FAIL\")}" > ../test-data/t262/${fn%.js}.json
-   ./testgen ../test-data/t262/${fn%.js}.json > ../test-data/t262/${fn%.js}.parse
+                catch (ex) {print(\"FAIL\")}" > ../test-data/t262/${fn%.js}.json
+       ./testgen ../test-data/t262/${fn%.js}.json > ../test-data/t262/${fn%.js}.parse
+   fi
 done
