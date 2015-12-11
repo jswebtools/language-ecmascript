@@ -350,15 +350,16 @@ stringLiteral =  withPos $ lexeme $
 
 doubleStringCharacter :: Parser String
 doubleStringCharacter =
+  lineContinuation <|>
   stringify ((anyChar `butNot` choice[forget dblquote, forget backslash, lineTerminator])
              <|> backslash *> escapeSequence)
-  <|> lineContinuation
 
 singleStringCharacter :: Parser String
 singleStringCharacter =
+  lineContinuation <|>
   stringify ((anyChar `butNot` choice[forget quote, forget backslash, forget lineTerminator])
              <|> backslash *> escapeSequence)
-  <|> lineContinuation
+
 
 lineContinuation :: Parser String
 lineContinuation = backslash >> lineTerminatorSequence >> return ""
