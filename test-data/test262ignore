@@ -36,6 +36,7 @@ S13.2.2_A5_T1.js
 15.2.3.3-2-8.js
 S15.2.2.1_A5_T1.js
 15.2.3.7-6-a-226.js
+S15.8.2.7_A6.js
 S15.10.6.3_A2_T6.js
 15.2.3.7-6-a-281.js
 S8.5_A5.js
@@ -203,8 +204,12 @@ S15.8.2.2_A5.js
 S15.8.2.3_A6.js
 S7.8.3_A3.2_T1.js
 15.2.3.7-6-a-242.js
+15.2.3.7-6-a-252.js
+15.2.3.7-6-a-255.js
+15.2.3.7-6-a-196.js
 
 # Bad floating point conversion in the reference parser
+15.4.4.15-9-1.js
 S11.6.1_A4_T8.js
 15.2.3.6-2-18.js
 S9.3_A4.1_T2.js
@@ -256,8 +261,15 @@ S15.8.2.13_A22.js
 S9.3.1_A9.js
 15.5.4.20-2-17.js
 S15.8.2.13_A23.js
+S15.7.3.2_A1.js
+15.5.4.20-2-26.js
+8.5.1.js
+S9.3.1_A6_T1.js
+15.4.4.14-10-1.js
+S9.3.1_A6_T2.js
 
 # Integer overflow
+S15.5.4.14_A2_T29.js
 S15.5.4.14_A2_T30.js
 S15.5.4.14_A2_T31.js
 S15.5.4.14_A2_T32.js
@@ -266,7 +278,7 @@ S15.5.4.14_A2_T34.js
 S15.5.4.14_A2_T35.js
 S15.5.4.14_A2_T36.js
 S15.5.4.14_A2_T37.js
-S15.5.4.14_A2_T29.js
+11.3.2_FN_2.js
 
 # Reference parser parse trees cannot have regexp literals
 9.1_b.js
@@ -699,3 +711,29 @@ S15.5.4.10_A2_T7.js
 S15.5.4.10_A2_T4.js
 S15.5.4.10_A2_T13.js
 15.5.4.20-2-49.js
+
+#incorrectly using a function declaration as a statement
+15.2.3.6-4-195.js
+S12.8_A4_T2.js
+15.4.4.19-5-1.js
+12.14-13.js
+10.4.2-1-2.js
+S12.8_A4_T1.js
+S12.8_A4_T3.js
+15.2.3.6-4-360-7.js
+15.2.3.6-4-360-3.js
+S12.8_A3.js
+
+#function declaration incorrectly parsed as an empty statement by the reference parser
+S11.1.1_A3.1.js
+S13_A6_T2.js
+S13_A6_T1.js
+15.4.4.16-7-b-1.js
+S11.4.1_A3.1.js
+S14_A5_T1.js
+S14_A5_T2.js
+S11.1.1_A3.2.js
+S11.4.1_A3.3.js
+
+#octal literals
+15.2.3.6-2-17-1.js
