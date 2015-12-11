@@ -1,6 +1,51 @@
 # Explicit number coercion in the reference parser
 15.2.3.7-6-a-292.js
-# Reference parser parse trees don't have information about regexps
+S7.8.3_A1.2_T8.js
+15.2.3.7-6-a-254.js
+S15.10.6.2_A2_T6.js
+15.2.3.7-6-a-282.js
+S7.8.3_A3.4_T6.js
+15.2.3.7-6-a-192.js
+15.2.3.7-6-a-189.js
+15.2.3.7-6-a-241.js
+15.2.3.7-6-a-286.js
+15.2.3.7-6-a-190.js
+S7.8.3_A2.2_T8.js
+15.2.3.7-6-a-253.js
+15.2.3.7-6-a-285.js
+15.2.3.7-6-a-256.js
+15.2.3.7-6-a-300.js
+15.2.3.7-6-a-264.js
+S8.5_A10.js
+S15.8.2.4_A6.js
+S15.8.2.15_A6.js
+15.2.3.7-6-a-209.js
+15.2.3.7-6-a-211.js
+15.2.3.7-6-a-194.js
+S7.8.3_A2.2_T5.js
+15.2.3.7-6-a-261.js
+15.2.3.7-6-a-213.js
+S7.8.3_A2.1_T1.js
+15.2.3.7-6-a-193.js
+S7.8.3_A3.4_T3.js
+15.2.3.7-6-a-205.js
+S7.8.3_A3.4_T4.js
+
+# Bad floating point conversion in the reference parser
+S11.6.1_A4_T8.js
+15.2.3.6-2-18.js
+S9.3_A4.1_T2.js
+S15.8.2.5_A17.js
+S9.4_A3_T1.js
+S15.8.2.13_A14.js
+15.2.3.3-2-30.js
+15.2.3.6-2-28.js
+S9.3_A4.1_T1.js
+
+# Integer overflow
+S15.5.4.14_A2_T35.js
+
+# Reference parser parse trees cannot have regexp literals
 9.1_b.js
 S7.8.5_A3.1_T5.js
 S7.8.5_A3.1_T4.js
