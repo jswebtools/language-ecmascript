@@ -362,7 +362,7 @@ singleStringCharacter =
 
 
 lineContinuation :: Parser String
-lineContinuation = backslash >> lineTerminatorSequence >> return ""
+lineContinuation = try (backslash >> lineTerminatorSequence >> return "")
 
 escapeSequence :: Parser Char
 escapeSequence = characterEscapeSequence
