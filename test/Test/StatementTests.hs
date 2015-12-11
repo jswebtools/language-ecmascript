@@ -238,6 +238,9 @@ unitTests runTest =
   $: testCase "A do-while loop with 'with' and 'return' statement in a function (QuickCheck regression)" $$
        runTest "func-while-with-return"
        [FunctionStmt () (Id () "f") [] [DoWhileStmt () (WithStmt () (NumLit () $ Left 0) (ReturnStmt () $ Just $ VarRef () $ Id () "P")) (NullLit())]]
+  $: testCase "Line continuation in string literals" $$
+       runTest "line-cont-string"
+       [ExprStmt () (StringLit () "hello"), ExprStmt () (StringLit () "world")]
   $: []
 
 commentTest =
