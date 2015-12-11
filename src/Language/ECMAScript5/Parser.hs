@@ -73,7 +73,7 @@ arrayLiteral = withPos $
                <$> inBrackets elementsListWithElision
 
 elementsListWithElision :: Parser [Maybe (Positioned Expression)]
-elementsListWithElision = optionMaybe assignmentExpression `sepBy` pcomma
+elementsListWithElision = (optionMaybe assignmentExpression) `sepBy` pcomma
 
 -- 11.1.5
 objectLiteral :: PosParser Expression
@@ -86,8 +86,8 @@ propertyAssignment :: PosParser PropAssign
 propertyAssignment = withPos $
                      (do try (sget <* notFollowedBy pcolon)
                          pname <- propertyName
-                         prparen
                          plparen
+                         prparen
                          body <- inBraces functionBody
                          return $ PGet def pname body)
                   <|>(do try (sset <* notFollowedBy pcolon)
