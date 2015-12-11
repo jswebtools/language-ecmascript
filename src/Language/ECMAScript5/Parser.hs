@@ -73,7 +73,15 @@ arrayLiteral = withPos $
                <$> inBrackets elementsListWithElision
 
 elementsListWithElision :: Parser [Maybe (Positioned Expression)]
-elementsListWithElision = (optionMaybe assignmentExpression) `sepBy` pcomma
+elementsListWithElision =
+  -- there's going to be at least one Nothing in this list since
+  -- optionMaybe is going to parse even if there are no commas. The
+  -- last Nothing is going to be redundant.
+  removeLastNothing <$> (optionMaybe assignmentExpression) `sepBy` pcomma
+  where removeLastNothing xs = case xs of
+          [] -> []
+          [Nothing] -> []
+          x:xs -> x:removeLastNothing xs
 
 -- 11.1.5
 objectLiteral :: PosParser Expression
