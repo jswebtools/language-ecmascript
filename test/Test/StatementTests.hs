@@ -241,6 +241,16 @@ unitTests runTest =
   $: testCase "Line continuation in string literals" $$
        runTest "line-cont-string"
        [ExprStmt () (StringLit () "hello"), ExprStmt () (StringLit () "world")]
+  $: testCase "ASI in do-while (regression from test262)" $$
+       runTest "Sbp_7.9_A9_T4"
+       [DoWhileStmt () (EmptyStmt ()) (BoolLit () False),
+        ExprStmt () (BoolLit () True)]
+  $: testCase "Illegal escape sequences in identifiers (regression from test262)" $$
+       expectedParseFail "illegal-escapes-ident" (1,3)
+  $: testCase "Punctuator cannot be expressed as a Unicode escape sequence consisting of six characters, namely \\u plus four hexadecimal digits" $$
+       expectedParseFail "illegal-escapes-punc" (1,6)
+  $: testCase "Illegal escape sequences (regression from test262)" $$
+       expectedParseFail "illegal-naked-escapes" (1,6)
   $: []
 
 commentTest =

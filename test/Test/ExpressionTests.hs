@@ -43,6 +43,16 @@ unitTests =
        parseTest "o[x++&256]" (BracketRef () (VarRef () (Id () "o")) (InfixExpr () OpBAnd (UnaryAssignExpr () PostfixInc (VarRef () (Id () "x"))) (NumLit () $ Left 256)))
   $: testCase "Object literal with a trailing comma" $$
        parseTest "{foo: 23, \"bar\": 50, }" (ObjectLit () [PValue () (PropId () "foo") (NumLit () $ Left 23), PValue () (PropString () "bar") (NumLit () $ Left 50)])
+  $: testCase "Exponents (regression from t262)" $$
+       parseTest "0.E+1" (NumLit () $ Right 0e1)
+  $: testCase "Exponents 2 (regression from t262)" $$
+       parseTest "0.E-1" (NumLit () $ Right 0e-1)
+  $: testCase "Exponents 3 (regression from t262)" $$
+       parseTest "0.E0" (NumLit () $ Right 0e0)
+  $: testCase "Exponents 4 (regression from t262)" $$
+       parseTest "0." (NumLit () $ Right 0.0)
+  $: testCase "Float-member (regression from t262)" $$
+       parseTest "1..toString()" (CallExpr () (DotRef () (NumLit () $ Right 1.0) (Id () "toString")) [])
   $: []
        
 --run = defaultMain test_ecmascript5_expression

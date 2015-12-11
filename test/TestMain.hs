@@ -13,12 +13,12 @@ main = do tests_ecmascript5_diff <- tests_diff
           tests_ecmascript5_parser_reference <- test_reference
           let propertytest_ecmascript5_pretty = tests_pretty
           defaultMain $ testGroup "all tests"
-            [tests_ecmascript5_parser_reference
-            -- ,tests_ecmascript5_parser
-            -- ,tests_ecmascript5_parser_with_autosemi
-            -- ,tests_ecmascript5_expression
-            -- ,propertytest_ecmascript5_pretty
-            -- ,tests_ecmascript5_diff
+            [tests_ecmascript5_parser
+            ,tests_ecmascript5_parser_with_autosemi
+            ,tests_ecmascript5_expression
+            ,propertytest_ecmascript5_pretty
+            ,tests_ecmascript5_parser_reference
+            ,tests_ecmascript5_diff
             ]
             
           
