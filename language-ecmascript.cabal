@@ -46,7 +46,8 @@ Library
                  QuickCheck >= 2.5 && < 2.9,
                  template-haskell,
                  testing-feat >= 0.4.0.2 && < 0.5,
-                 Diff == 0.3.*
+                 Diff == 0.3.*,
+                 lens-simple
   ghc-options:
     -fwarn-incomplete-patterns
   Exposed-Modules: Language.ECMAScript5

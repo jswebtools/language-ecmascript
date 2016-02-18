@@ -7,6 +7,7 @@ import Control.Applicative
 import Control.Arrow
 import Control.Monad.State hiding (mapM)
 import Prelude hiding (mapM)
+import Lens.Simple
 
 -- | Removes annotations from a tree
 removeAnnotations :: Traversable t => t a -> t ()
@@ -25,7 +26,6 @@ addExtraAnnotationField def t = traverse (\z -> pure (z, def)) t ()
 -- | remove an extra field
 removeExtraAnnotationField :: Traversable t => t (a, b) -> t a
 removeExtraAnnotationField t = traverse (pure . fst) t ()
-
 
 -- | Assigns unique numeric (Int) ids to each node in the AST. Returns
 -- a pair: the tree annotated with UID's and the last ID that was
@@ -46,9 +46,8 @@ class HasAnnotation a where
   -- | Sets the annotation of the root of the tree  
   setAnnotation :: b -> a b -> a b
 
--- | Modify the annotation of the root node of the syntax tree
-withAnnotation :: (HasAnnotation a) => (b -> b) -> a b -> a b
-withAnnotation f x = setAnnotation (f $ getAnnotation x) x
+annotation :: HasAnnotation a => Lens (a b) (a b) b b
+annotation = lens getAnnotation (flip setAnnotation)
 
 instance HasAnnotation Program where
   getAnnotation (Program a _) = a
