@@ -106,8 +106,15 @@ ppString = dquotes . text . jsEscape
 
 ppVarDecl :: Bool -> VarDecl a -> Doc a
 ppVarDecl hasIn vd = case vd of
-  VarDecl a id Nothing  -> annotate a $ prettyPrint id
-  VarDecl a id (Just e) -> annotate a $ prettyPrint id <+> equals <+> ppAssignmentExpression hasIn e
+  VarDecl a ident Nothing  -> annotate a $ prettyPrint ident
+  VarDecl a ident (Just e) ->
+      annotate a $ prettyPrint ident <+> equals
+      <+> alignNonFunctions (ppAssignmentExpression hasIn e)
+      where
+          alignNonFunctions =
+              case e of
+              FuncExpr {} -> Prelude.id
+              _ -> align
 
 -- | Print a list of items in parenthesis
 parenList :: (a -> Doc b) -> [a] -> Doc b
