@@ -117,6 +117,10 @@ ppVarDecl hasIn vd = case vd of
 parenList :: (a -> Doc b) -> [a] -> Doc b
 parenList ppElem = parens . align . cat . punctuate comma . map ppElem
 
+isIf :: Statement a -> Bool
+isIf IfStmt {} = True
+isIf _ = False
+
 ppStatement :: Statement a -> Doc a
 ppStatement s = annotate (getAnnotation s) $ case s of
   BlockStmt a ss -> asBlock ss
@@ -128,7 +132,9 @@ ppStatement s = annotate (getAnnotation s) $ case s of
                                       nestStmt cons
   IfStmt _ test cons alt -> "if" <+> parens (ppExpression True test) </>
                             nestStmt cons </> "else"
-                            <+> nestStmt alt
+                            <+> if isIf alt
+                                then prettyPrint alt
+                                else nestStmt alt
   SwitchStmt _ e cases ->
     "switch" <+> parens (ppExpression True e) <$> lbrace <> line <>
     nestBlock (vcat (map prettyPrint cases)) <> line <> rbrace
