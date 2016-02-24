@@ -109,6 +109,10 @@ ppVarDecl hasIn vd = case vd of
   VarDecl a id Nothing  -> annotate a $ prettyPrint id
   VarDecl a id (Just e) -> annotate a $ prettyPrint id <+> equals <+> ppAssignmentExpression hasIn e
 
+-- | Print a list of items in parenthesis
+parenList :: (a -> Doc b) -> [a] -> Doc b
+parenList ppElem = parens . cat . punctuate comma . map ppElem
+
 ppStatement :: Statement a -> Doc a
 ppStatement s = annotate (getAnnotation s) $ case s of
   BlockStmt a ss -> asBlock ss
@@ -159,7 +163,7 @@ ppStatement s = annotate (getAnnotation s) $ case s of
     "var" <+> cat (punctuate comma (map (ppVarDecl True) decls)) <> semi
   FunctionStmt _ name args body ->
     "function" <+> prettyPrint name <>
-    parens (cat $ punctuate comma (map prettyPrint args)) <+>
+    parenList prettyPrint args <+>
     asBlock body
   DebuggerStmt _ -> "debugger" <> semi
 
@@ -284,7 +288,7 @@ ppMemberExpression :: Expression a -> Doc a
 ppMemberExpression e = case e of
   FuncExpr a name params body ->  annotate a $
     "function" <+> maybe (\n -> prettyPrint n <> space) name <>
-    parens (cat $ punctuate comma (map prettyPrint params)) <+>
+    parenList prettyPrint params <+>
     asBlock body
   DotRef a obj id -> annotate a $ ppObjInDotRef obj ppMemberExpression <> "." <> prettyPrint id
   BracketRef a obj key ->  annotate a $
@@ -305,8 +309,7 @@ ppCallExpression e = case e of
   _ -> ppMemberExpression e
 
 ppArguments :: [Expression a] -> Doc a
-ppArguments es =
-  parens $ cat $ punctuate comma (map (ppAssignmentExpression True) es)
+ppArguments = parenList (ppAssignmentExpression True)
 
 ppLHSExpression :: Expression a -> Doc a
 ppLHSExpression = ppCallExpression
