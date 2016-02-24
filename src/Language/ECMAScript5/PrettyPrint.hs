@@ -22,7 +22,7 @@ import Language.ECMAScript5.Syntax
 import Language.ECMAScript5.Syntax.Annotations
 #if __GLASGOW_HASKELL__ > 708
 import Prelude hiding (maybe, (<$>))
-#else 
+#else
 import Prelude hiding (maybe)
 #endif
 
@@ -42,7 +42,7 @@ class Pretty s a | s -> a where
 instance Pretty (Program a) a where
   prettyPrint (Program _ ss) = vcat $ map prettyPrint ss
 
-instance Pretty (Expression a) a where 
+instance Pretty (Expression a) a where
   prettyPrint = ppExpression True
 
 instance Pretty (Statement a) a where
@@ -51,8 +51,8 @@ instance Pretty (Statement a) a where
 instance Pretty (CatchClause a) a where
   prettyPrint (CatchClause a id ss) =
     annotate a $ "catch" <+> (parens.prettyPrint) id <+> asBlock ss
-    
-instance Pretty (ForInit a) a where 
+
+instance Pretty (ForInit a) a where
   prettyPrint t = case t of
     NoInit     -> empty
     VarInit vs -> "var" <+> cat (punctuate comma $ map (ppVarDecl False) vs)
@@ -62,7 +62,7 @@ instance Pretty (ForInInit a) a where
   prettyPrint t = case t of
     ForInVar vd   -> "var" <+> ppVarDecl False vd
     ForInExpr exp -> ppExpression False exp
-    
+
 instance Pretty (VarDecl a) a where
   prettyPrint = ppVarDecl True
 
@@ -72,7 +72,7 @@ instance Pretty (CaseClause a) a where
                  nestBlock (vcat $ map prettyPrint ss)
   prettyPrint (CaseDefault _ ss) = "default:" </>
                                    nestBlock (vcat $ map prettyPrint ss)
-  
+
 instance Pretty (Prop a) a where
   prettyPrint p = case p of
     PropId a id -> annotate a $ prettyPrint (Id a id)
@@ -115,10 +115,10 @@ ppStatement s = annotate (getAnnotation s) $ case s of
   EmptyStmt a -> semi
   ExprStmt a e | unsafeInExprStmt (e) -> parens (ppExpression True e) <> semi
   ExprStmt _ e | otherwise            -> ppExpression True e <> semi
-  IfStmt _ test cons (EmptyStmt _) -> "if" <+> 
-                                      parens (ppExpression True test) </> 
+  IfStmt _ test cons (EmptyStmt _) -> "if" <+>
+                                      parens (ppExpression True test) </>
                                       (nestBlock $ prettyPrint cons)
-  IfStmt _ test cons alt -> "if" <+> parens (ppExpression True test) </> 
+  IfStmt _ test cons alt -> "if" <+> parens (ppExpression True test) </>
                             (nestBlock $ prettyPrint cons) </> "else"
                             <+> (nestBlock $ prettyPrint alt)
   SwitchStmt _ e cases ->
@@ -128,7 +128,7 @@ ppStatement s = annotate (getAnnotation s) $ case s of
                            nestBlock (prettyPrint body)
   ReturnStmt _ Nothing -> "return"
   ReturnStmt _ (Just e) -> "return" <+> ppExpression True e
-  DoWhileStmt _ s e -> 
+  DoWhileStmt _ s e ->
     "do" </> prettyPrint s </> "while" <+> parens (ppExpression True e) <> semi
   BreakStmt _ Nothing ->  "break" <> semi
   BreakStmt _ (Just label) -> "break" <+> prettyPrint label <> semi
@@ -136,31 +136,31 @@ ppStatement s = annotate (getAnnotation s) $ case s of
   ContinueStmt _ (Just label) -> "continue" <+> prettyPrint label <> semi
   LabelledStmt _ label s -> prettyPrint label <> colon <+> prettyPrint s
   ForInStmt p init e body ->
-    "for" <+> 
-    parens (prettyPrint init <+> "in" <+> ppExpression True e) </> 
+    "for" <+>
+    parens (prettyPrint init <+> "in" <+> ppExpression True e) </>
     prettyPrint body
   ForStmt _ init incr test body ->
-    "for" <+> 
+    "for" <+>
     parens (prettyPrint init <> semi <>
-            maybe (\e -> space <> ppExpression True e) incr <> 
-            semi <> maybe (\e -> space <> ppExpression True e) test) </> 
+            maybe (\e -> space <> ppExpression True e) incr <>
+            semi <> maybe (\e -> space <> ppExpression True e) test) </>
     prettyPrint body
   TryStmt _ stmts mcatch mfinally ->
-    "try" </> asBlock stmts </> ppCatch </> ppFinally 
+    "try" </> asBlock stmts </> ppCatch </> ppFinally
     where ppFinally = case mfinally of
             Nothing -> empty
             Just stmts -> "finally" <> asBlock stmts
           ppCatch = case mcatch of
             Nothing -> empty
-            Just cc -> prettyPrint cc    
+            Just cc -> prettyPrint cc
   ThrowStmt _ e -> "throw" <+> ppExpression True e <> semi
   WithStmt _ e s -> "with" <+> parens (ppExpression True e) </> prettyPrint s
   VarDeclStmt _ decls ->
     "var" <+> cat (punctuate comma (map (ppVarDecl True) decls)) <> semi
   FunctionStmt _ name args body ->
-    "function" <+> prettyPrint name <> 
+    "function" <+> prettyPrint name <>
     parens (cat $ punctuate comma (map prettyPrint args)) <+>
-    asBlock body    
+    asBlock body
   DebuggerStmt _ -> "debugger" <> semi
 
 -- | A predicate to tell if the expression --when pretty-printed--
@@ -188,8 +188,8 @@ unsafeInExprStmt = unsafeInExprStmt_ 15
 infixOp op = case op of
   OpMul -> "*"
   OpDiv -> "/"
-  OpMod -> "%" 
-  OpAdd -> "+" 
+  OpMod -> "%"
+  OpAdd -> "+"
   OpSub -> "-"
   OpLShift -> "<<"
   OpSpRShift -> ">>"
@@ -263,8 +263,8 @@ ppPrimaryExpression e = case e of
   NumLit  a (Left i) -> annotate a $ text (show i)
   NumLit  a (Right d) -> annotate a $ text (show d)
   StringLit a str -> annotate a $ dquotes (text (jsEscape str))
-  RegexpLit a reg g i m -> annotate a $  "/" <> (text (jsEscape reg)) <> "/" <> 
-                          (if g then "g" else empty) <> 
+  RegexpLit a reg g i m -> annotate a $  "/" <> (text (jsEscape reg)) <> "/" <>
+                          (if g then "g" else empty) <>
                           (if i then "i" else empty) <>
                           (if m then "m" else empty)
   ArrayLit a es -> annotate a $ brackets $ cat $ punctuate comma (map ppArrayElement es)
@@ -285,10 +285,10 @@ ppMemberExpression e = case e of
   FuncExpr a name params body ->  annotate a $
     "function" <+> maybe (\n -> prettyPrint n <> space) name <>
     parens (cat $ punctuate comma (map prettyPrint params)) <+>
-    asBlock body    
+    asBlock body
   DotRef a obj id -> annotate a $ ppObjInDotRef obj ppMemberExpression <> "." <> prettyPrint id
   BracketRef a obj key ->  annotate a $
-    ppMemberExpression obj <> brackets (ppExpression True key)  
+    ppMemberExpression obj <> brackets (ppExpression True key)
   NewExpr a ctor args ->  annotate a $
     "new" <+> ppMemberExpression ctor <> ppArguments args
   _ -> ppPrimaryExpression e
@@ -302,10 +302,10 @@ ppCallExpression e = case e of
   CallExpr a f args -> annotate a $ ppCallExpression f <> ppArguments args
   DotRef a obj id -> annotate a $ ppObjInDotRef obj ppCallExpression <> "." <> prettyPrint id
   BracketRef a obj key -> annotate a $ ppCallExpression obj <> brackets (ppExpression True key)
-  _ -> ppMemberExpression e  
-    
+  _ -> ppMemberExpression e
+
 ppArguments :: [Expression a] -> Doc a
-ppArguments es = 
+ppArguments es =
   parens $ cat $ punctuate comma (map (ppAssignmentExpression True) es)
 
 ppLHSExpression :: Expression a -> Doc a
@@ -317,7 +317,7 @@ ppPostfixExpression e = case e of
   UnaryAssignExpr a PostfixInc e' -> annotate a $ ppLHSExpression e' <> "++"
   UnaryAssignExpr a PostfixDec e' -> annotate a $ ppLHSExpression e' <> "--"
   _ -> ppLHSExpression e
-  
+
 -- 11.4
 ppUnaryExpression :: Expression a -> Doc a
 ppUnaryExpression e = case e of
@@ -332,7 +332,7 @@ ppMultiplicativeExpression e = case e of
   InfixExpr a op e1 e2 | op `elem` [OpMul, OpDiv, OpMod] -> annotate a $
     ppMultiplicativeExpression e1 <+> infixOp op <+> ppUnaryExpression e2
   _ -> ppUnaryExpression e
-  
+
 -- 11.6
 ppAdditiveExpression :: Expression a -> Doc a
 ppAdditiveExpression e = case e of
@@ -344,38 +344,38 @@ ppAdditiveExpression e = case e of
 ppShiftExpression :: Expression a -> Doc a
 ppShiftExpression e = case e of
   InfixExpr a op e1 e2 | op `elem` [OpLShift, OpSpRShift, OpZfRShift] ->
-    annotate a $ppShiftExpression e1 <+> infixOp op <+> ppAdditiveExpression e2  
+    annotate a $ppShiftExpression e1 <+> infixOp op <+> ppAdditiveExpression e2
   _ -> ppAdditiveExpression e
 
--- 11.8.  
+-- 11.8.
 -- | @ppRelationalExpression True@ is RelationalExpression,
 -- @ppRelationalExpression False@ is RelationalExpressionNoIn
 ppRelationalExpression :: Bool -> Expression a -> Doc a
-ppRelationalExpression hasIn e = 
+ppRelationalExpression hasIn e =
   let opsNoIn = [OpLT, OpGT, OpLEq, OpGEq, OpInstanceof]
       ops     = if hasIn then OpIn:opsNoIn else opsNoIn
-  in case e of    
+  in case e of
     InfixExpr a op e1 e2 | op `elem` ops -> annotate a $
       ppRelationalExpression hasIn e1 <+> infixOp op <+> ppShiftExpression e2
     _ -> ppShiftExpression e
-    
+
 -- 11.9
 ppEqualityExpression :: Bool -> Expression a -> Doc a
 ppEqualityExpression hasIn e = case e of
   InfixExpr a op e1 e2 | op `elem` [OpEq, OpNEq, OpStrictEq, OpStrictNEq] ->
-    annotate a $ ppEqualityExpression hasIn e1 <+> infixOp op <+> 
+    annotate a $ ppEqualityExpression hasIn e1 <+> infixOp op <+>
                  ppRelationalExpression hasIn e2
   _ -> ppRelationalExpression hasIn e
-  
+
 -- 11.10
 ppBitwiseANDExpression :: Bool -> Expression a -> Doc a
 ppBitwiseANDExpression hasIn e = case e of
   InfixExpr a op@OpBAnd e1 e2 -> annotate a $
-                                 ppBitwiseANDExpression hasIn e1 <+> 
+                                 ppBitwiseANDExpression hasIn e1 <+>
                                  infixOp op <+>
                                  ppEqualityExpression hasIn e2
   _ -> ppEqualityExpression hasIn e
-  
+
 ppBitwiseXORExpression :: Bool -> Expression a -> Doc a
 ppBitwiseXORExpression hasIn e = case e of
   InfixExpr a op@OpBXor e1 e2 -> annotate a $
@@ -383,7 +383,7 @@ ppBitwiseXORExpression hasIn e = case e of
                                  infixOp op <+>
                                  ppBitwiseANDExpression hasIn e2
   _ -> ppBitwiseANDExpression hasIn e
-  
+
 ppBitwiseORExpression :: Bool -> Expression a -> Doc a
 ppBitwiseORExpression hasIn e = case e of
   InfixExpr a op@OpBOr e1 e2 -> annotate a $
@@ -399,8 +399,8 @@ ppLogicalANDExpression hasIn e = case e of
                                  ppLogicalANDExpression hasIn e1 <+>
                                  infixOp op <+>
                                  ppBitwiseORExpression hasIn e2
-  _ -> ppBitwiseORExpression hasIn e                                 
-                                 
+  _ -> ppBitwiseORExpression hasIn e
+
 ppLogicalORExpression :: Bool -> Expression a -> Doc a
 ppLogicalORExpression hasIn e = case e of
   InfixExpr a op@OpLOr e1 e2 -> annotate a $
@@ -408,12 +408,12 @@ ppLogicalORExpression hasIn e = case e of
                                 infixOp op <+>
                                 ppLogicalANDExpression hasIn e2
   _ -> ppLogicalANDExpression hasIn e
-  
+
 -- 11.12
 ppConditionalExpression :: Bool -> Expression a -> Doc a
 ppConditionalExpression hasIn e = case e of
   CondExpr a c et ee -> annotate a $
-                        ppLogicalORExpression hasIn c <+> "?" <+> 
+                        ppLogicalORExpression hasIn c <+> "?" <+>
                         ppAssignmentExpression hasIn et <+> colon <+>
                         ppAssignmentExpression hasIn ee
   _ -> ppLogicalORExpression hasIn e
@@ -421,10 +421,10 @@ ppConditionalExpression hasIn e = case e of
 -- 11.13
 ppAssignmentExpression :: Bool -> Expression a -> Doc a
 ppAssignmentExpression hasIn e = case e of
-  AssignExpr a op l r -> annotate a $ ppExpression False l <+> assignOp op <+> 
+  AssignExpr a op l r -> annotate a $ ppExpression False l <+> assignOp op <+>
                          ppAssignmentExpression hasIn r
   _ -> ppConditionalExpression hasIn e
-  
+
 -- 11.14
 ppExpression :: Bool -> Expression a -> Doc a
 ppExpression hasIn e = case e of
