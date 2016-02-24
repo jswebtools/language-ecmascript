@@ -128,8 +128,8 @@ ppStatement :: Statement a -> Doc a
 ppStatement s = annotate (getAnnotation s) $ case s of
   BlockStmt a ss -> asBlock ss
   EmptyStmt a -> semi
-  ExprStmt a e | unsafeInExprStmt (e) -> parens (ppExpression True e) <> semi
-  ExprStmt _ e | otherwise            -> ppExpression True e <> semi
+  ExprStmt a e | unsafeInExprStmt e -> parens (nest 4 (ppExpression True e)) <> semi
+  ExprStmt _ e | otherwise          -> nest 4 (ppExpression True e) <> semi
   IfStmt _ test cons (EmptyStmt _) -> "if" <+>
                                       parens (ppExpression True test) </>
                                       nestStmt cons
@@ -144,7 +144,7 @@ ppStatement s = annotate (getAnnotation s) $ case s of
   WhileStmt _ test body -> "while" <+> parens (ppExpression True test) </>
                            nestStmt body
   ReturnStmt _ Nothing -> "return"
-  ReturnStmt _ (Just e) -> "return" <+> ppExpression True e
+  ReturnStmt _ (Just e) -> "return" <+> nest 4 (ppExpression True e)
   DoWhileStmt _ s e ->
     "do" </> prettyPrint s </> "while" <+> parens (ppExpression True e) <> semi
   BreakStmt _ Nothing ->  "break" <> semi
