@@ -111,7 +111,7 @@ ppVarDecl hasIn vd = case vd of
 
 -- | Print a list of items in parenthesis
 parenList :: (a -> Doc b) -> [a] -> Doc b
-parenList ppElem = parens . cat . punctuate comma . map ppElem
+parenList ppElem = parens . align . cat . punctuate comma . map ppElem
 
 ppStatement :: Statement a -> Doc a
 ppStatement s = annotate (getAnnotation s) $ case s of
