@@ -102,6 +102,10 @@ indentation = 3
 nestBlock :: Doc a -> Doc a
 nestBlock = nest indentation
 
+nestStmt :: Statement a -> Doc a
+nestStmt stmt@BlockStmt {} = prettyPrint stmt -- block has its own indentation
+nestStmt stmt = nestBlock $ prettyPrint stmt
+
 ppString = dquotes . text . jsEscape
 
 ppVarDecl :: Bool -> VarDecl a -> Doc a
@@ -121,15 +125,15 @@ ppStatement s = annotate (getAnnotation s) $ case s of
   ExprStmt _ e | otherwise            -> ppExpression True e <> semi
   IfStmt _ test cons (EmptyStmt _) -> "if" <+>
                                       parens (ppExpression True test) </>
-                                      (nestBlock $ prettyPrint cons)
+                                      nestStmt cons
   IfStmt _ test cons alt -> "if" <+> parens (ppExpression True test) </>
-                            (nestBlock $ prettyPrint cons) </> "else"
-                            <+> (nestBlock $ prettyPrint alt)
+                            nestStmt cons </> "else"
+                            <+> nestStmt alt
   SwitchStmt _ e cases ->
     "switch" <+> parens (ppExpression True e) <$> lbrace <> line <>
     nestBlock (vcat (map prettyPrint cases)) <> line <> rbrace
   WhileStmt _ test body -> "while" <+> parens (ppExpression True test) </>
-                           nestBlock (prettyPrint body)
+                           nestStmt body
   ReturnStmt _ Nothing -> "return"
   ReturnStmt _ (Just e) -> "return" <+> ppExpression True e
   DoWhileStmt _ s e ->
