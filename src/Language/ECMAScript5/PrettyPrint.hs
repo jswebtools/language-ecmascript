@@ -109,7 +109,7 @@ ppVarDecl hasIn vd = case vd of
   VarDecl a ident Nothing  -> annotate a $ prettyPrint ident
   VarDecl a ident (Just e) ->
       annotate a $ prettyPrint ident <+> equals
-      <+> alignNonFunctions (ppAssignmentExpression hasIn e)
+      </> alignNonFunctions (ppAssignmentExpression hasIn e)
       where
           alignNonFunctions =
               case e of
@@ -346,21 +346,21 @@ ppUnaryExpression e = case e of
 ppMultiplicativeExpression :: Expression a -> Doc a
 ppMultiplicativeExpression e = case e of
   InfixExpr a op e1 e2 | op `elem` [OpMul, OpDiv, OpMod] -> annotate a $
-    ppMultiplicativeExpression e1 <+> infixOp op <+> ppUnaryExpression e2
+    ppMultiplicativeExpression e1 </> infixOp op </> ppUnaryExpression e2
   _ -> ppUnaryExpression e
 
 -- 11.6
 ppAdditiveExpression :: Expression a -> Doc a
 ppAdditiveExpression e = case e of
   InfixExpr a op e1 e2 | op `elem` [OpAdd, OpSub] -> annotate a $
-    ppAdditiveExpression e1 <+> infixOp op <+> ppMultiplicativeExpression e2
+    ppAdditiveExpression e1 </> infixOp op </> ppMultiplicativeExpression e2
   _ -> ppMultiplicativeExpression e
 
 -- 11.7
 ppShiftExpression :: Expression a -> Doc a
 ppShiftExpression e = case e of
   InfixExpr a op e1 e2 | op `elem` [OpLShift, OpSpRShift, OpZfRShift] ->
-    annotate a $ppShiftExpression e1 <+> infixOp op <+> ppAdditiveExpression e2
+    annotate a $ppShiftExpression e1 </> infixOp op </> ppAdditiveExpression e2
   _ -> ppAdditiveExpression e
 
 -- 11.8.
@@ -372,14 +372,14 @@ ppRelationalExpression hasIn e =
       ops     = if hasIn then OpIn:opsNoIn else opsNoIn
   in case e of
     InfixExpr a op e1 e2 | op `elem` ops -> annotate a $
-      ppRelationalExpression hasIn e1 <+> infixOp op <+> ppShiftExpression e2
+      ppRelationalExpression hasIn e1 </> infixOp op </> ppShiftExpression e2
     _ -> ppShiftExpression e
 
 -- 11.9
 ppEqualityExpression :: Bool -> Expression a -> Doc a
 ppEqualityExpression hasIn e = case e of
   InfixExpr a op e1 e2 | op `elem` [OpEq, OpNEq, OpStrictEq, OpStrictNEq] ->
-    annotate a $ ppEqualityExpression hasIn e1 <+> infixOp op <+>
+    annotate a $ ppEqualityExpression hasIn e1 </> infixOp op </>
                  ppRelationalExpression hasIn e2
   _ -> ppRelationalExpression hasIn e
 
@@ -387,24 +387,24 @@ ppEqualityExpression hasIn e = case e of
 ppBitwiseANDExpression :: Bool -> Expression a -> Doc a
 ppBitwiseANDExpression hasIn e = case e of
   InfixExpr a op@OpBAnd e1 e2 -> annotate a $
-                                 ppBitwiseANDExpression hasIn e1 <+>
-                                 infixOp op <+>
+                                 ppBitwiseANDExpression hasIn e1 </>
+                                 infixOp op </>
                                  ppEqualityExpression hasIn e2
   _ -> ppEqualityExpression hasIn e
 
 ppBitwiseXORExpression :: Bool -> Expression a -> Doc a
 ppBitwiseXORExpression hasIn e = case e of
   InfixExpr a op@OpBXor e1 e2 -> annotate a $
-                                 ppBitwiseXORExpression hasIn e1 <+>
-                                 infixOp op <+>
+                                 ppBitwiseXORExpression hasIn e1 </>
+                                 infixOp op </>
                                  ppBitwiseANDExpression hasIn e2
   _ -> ppBitwiseANDExpression hasIn e
 
 ppBitwiseORExpression :: Bool -> Expression a -> Doc a
 ppBitwiseORExpression hasIn e = case e of
   InfixExpr a op@OpBOr e1 e2 -> annotate a $
-                                ppBitwiseORExpression hasIn e1 <+>
-                                infixOp op <+>
+                                ppBitwiseORExpression hasIn e1 </>
+                                infixOp op </>
                                 ppBitwiseXORExpression hasIn e2
   _ -> ppBitwiseXORExpression hasIn e
 
@@ -412,16 +412,16 @@ ppBitwiseORExpression hasIn e = case e of
 ppLogicalANDExpression :: Bool -> Expression a -> Doc a
 ppLogicalANDExpression hasIn e = case e of
   InfixExpr a op@OpLAnd e1 e2 -> annotate a $
-                                 ppLogicalANDExpression hasIn e1 <+>
-                                 infixOp op <+>
+                                 ppLogicalANDExpression hasIn e1 </>
+                                 infixOp op </>
                                  ppBitwiseORExpression hasIn e2
   _ -> ppBitwiseORExpression hasIn e
 
 ppLogicalORExpression :: Bool -> Expression a -> Doc a
 ppLogicalORExpression hasIn e = case e of
   InfixExpr a op@OpLOr e1 e2 -> annotate a $
-                                ppLogicalORExpression hasIn e1 <+>
-                                infixOp op <+>
+                                ppLogicalORExpression hasIn e1 </>
+                                infixOp op </>
                                 ppLogicalANDExpression hasIn e2
   _ -> ppLogicalANDExpression hasIn e
 
@@ -429,15 +429,15 @@ ppLogicalORExpression hasIn e = case e of
 ppConditionalExpression :: Bool -> Expression a -> Doc a
 ppConditionalExpression hasIn e = case e of
   CondExpr a c et ee -> annotate a $
-                        ppLogicalORExpression hasIn c <+> "?" <+>
-                        ppAssignmentExpression hasIn et <+> colon <+>
+                        ppLogicalORExpression hasIn c </> "?" <+>
+                        ppAssignmentExpression hasIn et </> colon <+>
                         ppAssignmentExpression hasIn ee
   _ -> ppLogicalORExpression hasIn e
 
 -- 11.13
 ppAssignmentExpression :: Bool -> Expression a -> Doc a
 ppAssignmentExpression hasIn e = case e of
-  AssignExpr a op l r -> annotate a $ ppExpression False l <+> assignOp op <+>
+  AssignExpr a op l r -> annotate a $ ppExpression False l </> assignOp op </>
                          ppAssignmentExpression hasIn r
   _ -> ppConditionalExpression hasIn e
 
