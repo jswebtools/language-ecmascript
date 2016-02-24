@@ -20,11 +20,7 @@ module Language.ECMAScript5.PrettyPrint (Pretty (..)
 import Text.PrettyPrint.Annotated.Leijen hiding (Pretty)
 import Language.ECMAScript5.Syntax
 import Language.ECMAScript5.Syntax.Annotations
-#if __GLASGOW_HASKELL__ > 708
-import Prelude hiding (maybe, (<$>))
-#else
 import Prelude hiding (maybe)
-#endif
 
 -- | Print the document to a string, rendering annotations in JS comments
 showAnnotations :: Show a => SimpleDoc a -> String
@@ -136,7 +132,7 @@ ppStatement s = annotate (getAnnotation s) $ case s of
                                 then prettyPrint alt
                                 else nestStmt alt
   SwitchStmt _ e cases ->
-    "switch" <+> parens (ppExpression True e) <$> lbrace <> line <>
+    "switch" <+> parens (ppExpression True e) <> line <> lbrace <> line <>
     nestBlock (vcat (map prettyPrint cases)) <> line <> rbrace
   WhileStmt _ test body -> "while" <+> parens (ppExpression True test) </>
                            nestStmt body
