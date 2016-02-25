@@ -71,8 +71,9 @@ instance Pretty (CaseClause a) a where
     CaseClause a e ss -> clause a (text "case" <+> ppExpression True e) ss
     CaseDefault a ss -> clause a (text "default") ss
     where
+      clause a cas [] = annotate a $ cas <> colon
       clause a cas ss =
-        annotate a $ cas <> colon <> nestBlock (softbreak <> vcat (map prettyPrint ss))
+        annotate a $ cas <> colon <> nestBlock (linebreak <> vcat (map prettyPrint ss))
 
 instance Pretty (Prop a) a where
   prettyPrint p = case p of
