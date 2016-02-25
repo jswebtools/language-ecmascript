@@ -142,8 +142,8 @@ ppStatement s = annotate (getAnnotation s) $ case s of
                                 then prettyPrint alt
                                 else nestStmt alt
   SwitchStmt _ e cases ->
-    "switch" <+> alignedParens (ppExpression True e) <> line <> lbrace <> line <>
-    nestBlock (vcat (map prettyPrint cases)) <> line <> rbrace
+    "switch" <+> alignedParens (ppExpression True e) <> line <> lbrace <>
+    nestBlock (line <> vcat (map prettyPrint cases)) <> line <> rbrace
   WhileStmt _ test body -> "while" <+> alignedParens (ppExpression True test) </>
                            nestStmt body
   ReturnStmt _ Nothing -> "return"
