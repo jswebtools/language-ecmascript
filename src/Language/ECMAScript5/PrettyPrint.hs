@@ -29,6 +29,9 @@ showAnnotations =
                      let sa = show a
                      in if length sa > 0 then "/*" ++ show a ++ "*/ " ++ s else s)
 
+alignedParens :: Doc a -> Doc a
+alignedParens = parens . align
+
 -- | A class of pretty-printable ECMAScript AST nodes.
 class Pretty s a | s -> a where
   -- | Pretty-print an ECMAScript AST node. Use 'render' or 'show' to
@@ -46,7 +49,7 @@ instance Pretty (Statement a) a where
 
 instance Pretty (CatchClause a) a where
   prettyPrint (CatchClause a id ss) =
-    annotate a $ "catch" <+> (parens.prettyPrint) id <+> asBlock ss
+    annotate a $ "catch" <+> (alignedParens.prettyPrint) id <+> asBlock ss
 
 instance Pretty (ForInit a) a where
   prettyPrint t = case t of
@@ -128,25 +131,25 @@ ppStatement :: Statement a -> Doc a
 ppStatement s = annotate (getAnnotation s) $ case s of
   BlockStmt a ss -> asBlock ss
   EmptyStmt a -> semi
-  ExprStmt a e | unsafeInExprStmt e -> parens (nest 4 (ppExpression True e)) <> semi
+  ExprStmt a e | unsafeInExprStmt e -> alignedParens (nest 4 (ppExpression True e)) <> semi
   ExprStmt _ e | otherwise          -> nest 4 (ppExpression True e) <> semi
   IfStmt _ test cons (EmptyStmt _) -> "if" <+>
-                                      parens (ppExpression True test) </>
+                                      alignedParens (ppExpression True test) </>
                                       nestStmt cons
-  IfStmt _ test cons alt -> "if" <+> parens (ppExpression True test) </>
+  IfStmt _ test cons alt -> "if" <+> alignedParens (ppExpression True test) </>
                             nestStmt cons </> "else"
                             <+> if isIf alt
                                 then prettyPrint alt
                                 else nestStmt alt
   SwitchStmt _ e cases ->
-    "switch" <+> parens (ppExpression True e) <> line <> lbrace <> line <>
+    "switch" <+> alignedParens (ppExpression True e) <> line <> lbrace <> line <>
     nestBlock (vcat (map prettyPrint cases)) <> line <> rbrace
-  WhileStmt _ test body -> "while" <+> parens (ppExpression True test) </>
+  WhileStmt _ test body -> "while" <+> alignedParens (ppExpression True test) </>
                            nestStmt body
   ReturnStmt _ Nothing -> "return"
   ReturnStmt _ (Just e) -> "return" <+> nest 4 (ppExpression True e)
   DoWhileStmt _ s e ->
-    "do" </> prettyPrint s </> "while" <+> parens (ppExpression True e) <> semi
+    "do" </> prettyPrint s </> "while" <+> alignedParens (ppExpression True e) <> semi
   BreakStmt _ Nothing ->  "break" <> semi
   BreakStmt _ (Just label) -> "break" <+> prettyPrint label <> semi
   ContinueStmt _ Nothing -> "continue" <> semi
@@ -154,13 +157,13 @@ ppStatement s = annotate (getAnnotation s) $ case s of
   LabelledStmt _ label s -> prettyPrint label <> colon <+> prettyPrint s
   ForInStmt p init e body ->
     "for" <+>
-    parens (prettyPrint init <+> "in" <+> ppExpression True e) </>
+    alignedParens (prettyPrint init <+> "in" <+> ppExpression True e) </>
     prettyPrint body
   ForStmt _ init incr test body ->
     "for" <+>
-    parens (prettyPrint init <> semi <>
-            maybe (\e -> space <> ppExpression True e) incr <>
-            semi <> maybe (\e -> space <> ppExpression True e) test) </>
+    alignedParens (prettyPrint init <> semi <>
+                   maybe (\e -> space <> ppExpression True e) incr <>
+                   semi <> maybe (\e -> space <> ppExpression True e) test) </>
     prettyPrint body
   TryStmt _ stmts mcatch mfinally ->
     "try" </> asBlock stmts </> ppCatch </> ppFinally
@@ -171,7 +174,7 @@ ppStatement s = annotate (getAnnotation s) $ case s of
             Nothing -> empty
             Just cc -> prettyPrint cc
   ThrowStmt _ e -> "throw" <+> ppExpression True e <> semi
-  WithStmt _ e s -> "with" <+> parens (ppExpression True e) </> prettyPrint s
+  WithStmt _ e s -> "with" <+> alignedParens (ppExpression True e) </> prettyPrint s
   VarDeclStmt _ decls ->
     "var" <+> cat (punctuate comma (map (ppVarDecl True) decls)) <> semi
   FunctionStmt _ name args body ->
@@ -286,15 +289,15 @@ ppPrimaryExpression e = case e of
                           (if m then "m" else empty)
   ArrayLit a es -> annotate a $ brackets $ cat $ punctuate comma (map ppArrayElement es)
   ObjectLit a pas ->  annotate a $ encloseSep lbrace rbrace comma $ map prettyPrint pas
-  _ -> parens $ ppExpression True e
+  _ -> alignedParens $ ppExpression True e
 
 ppArrayElement = maybe (ppAssignmentExpression True)
 
 instance Pretty (PropAssign a) a where
   prettyPrint pa = annotate (getAnnotation pa) $ case pa of
     PValue _ p e       -> prettyPrint p <> colon <+> ppAssignmentExpression True e
-    PGet  _ p body    -> "get" <+> prettyPrint p <> parens empty <+> asBlock body
-    PSet  _ p id body -> "set" <+> prettyPrint p <> parens (prettyPrint id) <+> asBlock body
+    PGet  _ p body    -> "get" <+> prettyPrint p <> alignedParens empty <+> asBlock body
+    PSet  _ p id body -> "set" <+> prettyPrint p <> alignedParens (prettyPrint id) <+> asBlock body
 
 -- 11.2
 ppMemberExpression :: Expression a -> Doc a
@@ -311,7 +314,7 @@ ppMemberExpression e = case e of
   _ -> ppPrimaryExpression e
 
 ppObjInDotRef :: Expression a -> (Expression a -> Doc a) -> Doc a
-ppObjInDotRef i@(NumLit _ _) _ = annotate (getAnnotation i) $ parens (ppPrimaryExpression i)
+ppObjInDotRef i@(NumLit _ _) _ = annotate (getAnnotation i) $ alignedParens (ppPrimaryExpression i)
 ppObjInDotRef e p              = p e
 
 ppCallExpression :: Expression a -> Doc a
