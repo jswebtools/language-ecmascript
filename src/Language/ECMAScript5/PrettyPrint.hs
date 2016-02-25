@@ -67,9 +67,9 @@ instance Pretty (VarDecl a) a where
 
 instance Pretty (CaseClause a) a where
   prettyPrint (CaseClause a e ss) =
-    annotate a $ "case" <+> ppExpression True e <> colon </>
+    annotate a $ "case" <+> ppExpression True e <> colon <//>
                  nestBlock (vcat $ map prettyPrint ss)
-  prettyPrint (CaseDefault _ ss) = "default:" </>
+  prettyPrint (CaseDefault _ ss) = "default:" <//>
                                    nestBlock (vcat $ map prettyPrint ss)
 
 instance Pretty (Prop a) a where
