@@ -22,6 +22,11 @@ import Language.ECMAScript5.Syntax
 import Language.ECMAScript5.Syntax.Annotations
 import Prelude hiding (maybe)
 
+isEmpty :: Doc a -> Bool
+isEmpty doc = case renderCompact doc of
+    SEmpty -> True
+    _ -> False
+
 -- | Print the document to a string, rendering annotations in JS comments
 showAnnotations :: Show a => SimpleDoc a -> String
 showAnnotations =
@@ -169,10 +174,12 @@ ppStatement s = annotate (getAnnotation s) $ case s of
                    semi <> maybe (\e -> space <> ppExpression True e) test) </>
     prettyPrint body
   TryStmt _ stmts mcatch mfinally ->
-    "try" </> asBlock stmts </> ppCatch </> ppFinally
+    "try" </> asBlock stmts </> ppCatch <> (if isEmpty ppFinally
+                                            then empty
+                                            else softline <> ppFinally)
     where ppFinally = case mfinally of
             Nothing -> empty
-            Just stmts -> "finally" <> asBlock stmts
+            Just stmts -> "finally" <+> asBlock stmts
           ppCatch = case mcatch of
             Nothing -> empty
             Just cc -> prettyPrint cc
