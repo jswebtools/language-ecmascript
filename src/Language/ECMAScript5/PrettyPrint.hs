@@ -15,7 +15,8 @@
 --     Pretty-print source, with annotations in comments
 
 module Language.ECMAScript5.PrettyPrint (Pretty (..)
-                                        ,unsafeInExprStmt) where
+                                        ,unsafeInExprStmt
+                                        ,showAnnotations) where
 
 import Text.PrettyPrint.Annotated.Leijen hiding (Pretty)
 import Language.ECMAScript5.Syntax
