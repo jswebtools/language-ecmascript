@@ -155,8 +155,8 @@ ppStatement s = annotate (getAnnotation s) $ case s of
     nestBlock (line <> vcat (map prettyPrint cases)) <> line <> rbrace
   WhileStmt _ test body -> "while" <+> alignedParens (ppExpression True test) </>
                            nestStmt body
-  ReturnStmt _ Nothing -> "return"
-  ReturnStmt _ (Just e) -> "return" <+> nest 4 (ppExpression True e)
+  ReturnStmt _ Nothing -> "return" <> semi
+  ReturnStmt _ (Just e) -> "return" <+> nest 4 (ppExpression True e) <> semi
   DoWhileStmt _ s e ->
     "do" </> prettyPrint s </> "while" <+> alignedParens (ppExpression True e) <> semi
   BreakStmt _ Nothing ->  "break" <> semi
