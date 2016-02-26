@@ -38,12 +38,15 @@ quoteCommon p s = do loc <- TH.location
                      let fname = TH.loc_filename loc
                      let (line, col)  = TH.loc_start loc
                      let p2  :: PosParser a
-                         p2 = (getPosition >>= \pos ->
-                                setPosition $ (flip setSourceName) fname $
-                                (flip setSourceLine) line $
-                                (flip setSourceColumn) col $ pos) >> p
+                         p2 = do pos <- getPosition
+                                 setPosition $ (flip setSourceName) fname $
+                                               (flip setSourceLine) line $
+                                               (flip setSourceColumn) col $ pos
+                                 res <- p
+                                 eof
+                                 return res
                      case parseString p2 s of
-                       Left err -> do TH.report True $ show err
+                       Left err -> do TH.reportError $ show err
                                       return $ TH.UnboxedTupE []
                        Right x  -> dataToExpQ (const Nothing) x
 
