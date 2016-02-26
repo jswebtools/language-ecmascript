@@ -24,14 +24,16 @@ import Data.Algorithm.DiffOutput
 casesDir = "test-data/t262/"
 
 test_reference :: IO TestTree
-test_reference = 
-               do fns <- getDirectoryContents casesDir
-                  let validCases   = getValid "js" fns
-                  let validExpects = getValid "parse" fns
-                  return $ testGroup "Parser reference test-suite" $
-                    map genTest $ filter
-                    (\f -> (FP.dropExtension f) `elem` (map FP.dropExtension validExpects)) validCases
-                    where getValid ext = filter $ \x -> FP.takeExtension x == '.':ext
+test_reference =
+  let getValid ext = filter $ \x -> FP.takeExtension x == '.':ext in
+  do casesDirExists <- doesDirectoryExist casesDir
+     fns <- if casesDirExists then listDirectory casesDir
+            else return []
+     let validCases   = getValid "js" fns
+     let validExpects = getValid "parse" fns
+     return $ testGroup "Parser reference test-suite" $ map genTest $ filter
+       (\f -> (FP.dropExtension f) `elem` (map FP.dropExtension validExpects)) validCases
+
 
 genTest :: FilePath -> TestTree
 genTest test =
