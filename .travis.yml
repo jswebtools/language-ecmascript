@@ -109,6 +109,7 @@ install:
       cabal --version
       travis_retry cabal update
       cabal install happy
+      PATH=./.cabal/bin/:$PATH
       cabal install --only-dependencies --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS
       ;;
   esac
