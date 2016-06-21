@@ -7,11 +7,14 @@ module Language.ECMAScript5.Parser (parse
                                    , SourcePos
                                    , SourceSpan
                                    , Positioned
+                                   , Comment
                                    , expression
                                    , statement
                                    , program
                                    , parseFromString
                                    , parseFromFile
+                                   , ParserAnnotation(..)
+                                   , objectLiteral
                                    ) where
 
 

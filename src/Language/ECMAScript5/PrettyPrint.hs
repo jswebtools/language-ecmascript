@@ -15,6 +15,9 @@
 --     Pretty-print source, with annotations in comments
 
 module Language.ECMAScript5.PrettyPrint (Pretty (..)
+                                        ,renderPretty
+                                        ,renderCompact
+                                        ,display
                                         ,unsafeInExprStmt
                                         ,showAnnotations) where
 
