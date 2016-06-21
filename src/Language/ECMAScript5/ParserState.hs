@@ -81,7 +81,7 @@ type Label = String
 
 data SourceSpan =  
   SourceSpan (SourcePos, SourcePos)
-  deriving (Data, Typeable, Eq)
+  deriving (Data, Typeable, Eq, Ord)
          
 
 spanBegin :: SourceSpan -> SourcePos
@@ -107,7 +107,7 @@ toSrcLoc (SourceSpan (start, end)) = SrcLoc (sourceLine start, sourceColumn star
 data Comment  
   = SingleLineComment String  
   | MultiLineComment String  
-    deriving (Show, Data, Typeable, Eq)
+    deriving (Show, Data, Typeable, Eq, Ord)
  
 class HasWhiteSpacePos a where
   getWhiteSpaceStartPos :: a -> SourcePos
