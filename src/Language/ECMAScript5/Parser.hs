@@ -15,6 +15,7 @@ module Language.ECMAScript5.Parser (parse
                                    , parseFromFile
                                    , ParserAnnotation(..)
                                    , objectLiteral
+                                   , identifier
                                    ) where
 
 

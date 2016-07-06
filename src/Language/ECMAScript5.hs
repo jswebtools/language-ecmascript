@@ -10,5 +10,5 @@ module Language.ECMAScript5
 import Language.ECMAScript5.Syntax
 import Language.ECMAScript5.Syntax.Arbitrary
 import Language.ECMAScript5.Syntax.Annotations
-import Language.ECMAScript5.Parser
+import Language.ECMAScript5.Parser hiding (identifier, objectLiteral)
 import Language.ECMAScript5.PrettyPrint
