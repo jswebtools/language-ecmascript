@@ -286,6 +286,13 @@ jsEscape (ch:chs) = sel ch ++ jsEscape chs where
     sel x    = [x]
     -- We don't have to do anything about \X, \x and \u escape sequences.
 
+regexpEscape :: String -> String
+regexpEscape "" = ""
+regexpEscape "\\" = "\\\\"
+regexpEscape ('\\':c:rest) = '\\':c:(regexpEscape rest)
+regexpEscape ('/':rest) = '\\':'/':regexpEscape rest
+regexpEscape (c:rest)   = c:regexpEscape rest
+
 -- 11.1
 ppPrimaryExpression :: Expression a -> Doc a
 ppPrimaryExpression e = case e of
@@ -297,7 +304,7 @@ ppPrimaryExpression e = case e of
   NumLit  a (Left i) -> annotate a $ text (show i)
   NumLit  a (Right d) -> annotate a $ text (show d)
   StringLit a str -> annotate a $ dquotes (text (jsEscape str))
-  RegexpLit a reg g i m -> annotate a $  "/" <> (text (jsEscape reg)) <> "/" <>
+  RegexpLit a reg g i m -> annotate a $  "/" <> (text (regexpEscape reg)) <> "/" <>
                           (if g then "g" else empty) <>
                           (if i then "i" else empty) <>
                           (if m then "m" else empty)
