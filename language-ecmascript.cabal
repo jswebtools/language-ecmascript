@@ -17,7 +17,7 @@ Category:       Language
 Build-Type:     Simple
 Synopsis:       JavaScript parser and pretty-printer library
 Description:
-  Tools for working with ECMAScript 3 (popularly known as JavaScript). 
+  Tools for working with ECMAScript 3 (popularly known as JavaScript).
   Includes a parser, pretty-printer, tools for working with source tree
   annotations and an arbitrary instance. See CHANGELOG for a summary of
   changes. The package follows the Haskell Package Versioning Policy since version 0.17.0.1.
@@ -45,12 +45,13 @@ Library
     QuickCheck >= 2.5 && < 3,
     template-haskell >= 2.7 && < 3,
     Diff == 0.3.*,
-    testing-feat >= 0.4.0.2 && < 0.5
+    testing-feat >= 0.4.0.2 && < 0.5,
+    charset >= 0.3
   ghc-options:
     -fwarn-incomplete-patterns
   Exposed-Modules:
-    Language.ECMAScript3 
-    Language.ECMAScript3.Lexer 
+    Language.ECMAScript3
+    Language.ECMAScript3.Lexer
     Language.ECMAScript3.Parser
     Language.ECMAScript3.PrettyPrint
     Language.ECMAScript3.Syntax
