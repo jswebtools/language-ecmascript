@@ -192,7 +192,7 @@ instance (Data a) => Fixable (JavaScript a) where
                                       :: Statement a -> Gen (Statement a))
                      >=>transformBiM (return . fixLValue
                                       :: LValue a -> Gen (LValue a))
-                     >=>(\(Script a ss)-> liftM (Script a) $ fixBreakContinue ss)
+                     >=>(\(Script a ss)-> fmap (Script a) $ fixBreakContinue ss)
 
 instance (Data a) => Fixable (Expression a) where
   fixUp = (fixUpFunExpr . transformBi (identifierFixup :: Id a -> Id a))
@@ -269,7 +269,7 @@ fixLValue lv = case lv of
 
 fixUpFunExpr :: (Data a) => Expression a -> Gen (Expression a)
 fixUpFunExpr e = case e of
-  FuncExpr a mid params body -> liftM (FuncExpr a mid params) $ fixBreakContinue body
+  FuncExpr a mid params body -> fmap (FuncExpr a mid params) $ fixBreakContinue body
   _ -> return e
 
 fixUpListExpr :: (Data a) => Expression a -> Gen (Expression a)
@@ -279,7 +279,7 @@ fixUpListExpr e = case e of
 
 fixUpFunStmt :: (Data a) => Statement a -> Gen (Statement a)
 fixUpFunStmt s = case s of
-  FunctionStmt a id params body -> liftM (FunctionStmt a id params) $ fixBreakContinue body
+  FunctionStmt a id params body -> fmap (FunctionStmt a id params) $ fixBreakContinue body
   _ -> return s
 
 identifierFixup :: Id a -> Id a

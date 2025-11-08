@@ -323,12 +323,12 @@ checkStmtM stmt = case stmt of
   DoWhileStmt _ s _ -> iterCommon s
   ForStmt _ _ _ _ s -> iterCommon s
   ForInStmt _ _ _ s -> iterCommon s
-  SwitchStmt _ _ cs -> pushEnclosing EnclosingSwitch $ liftM and $ mapM checkCaseM cs
-  BlockStmt _ ss -> pushEnclosing EnclosingOther $ liftM and $ mapM checkStmtM ss
-  IfStmt _ _ t e -> liftM2 (&&) (checkStmtM t) (checkStmtM e)
+  SwitchStmt _ _ cs -> pushEnclosing EnclosingSwitch $ fmap and $ mapM checkCaseM cs
+  BlockStmt _ ss -> pushEnclosing EnclosingOther $ fmap and $ mapM checkStmtM ss
+  IfStmt _ _ t e -> liftA2 (&&) (checkStmtM t) (checkStmtM e)
   IfSingleStmt _ _ t -> checkStmtM t
-  TryStmt _ body mcatch mfinally -> liftM2 (&&) (checkStmtM body) $
-    liftM2 (&&) (maybe (return True) checkCatchM mcatch)
+  TryStmt _ body mcatch mfinally -> liftA2 (&&) (checkStmtM body) $
+    liftA2 (&&) (maybe (return True) checkCatchM mcatch)
                 (maybe (return True) checkStmtM mfinally)
   WithStmt _ _ body -> checkStmtM body
   _ -> return True
@@ -347,7 +347,7 @@ pushLabel l = bracketState (first (unId l:))
 checkCaseM c = let ss = case c of
                      CaseClause _ _ body -> body
                      CaseDefault _ body -> body
-               in liftM and $ mapM checkStmtM ss
+               in fmap and $ mapM checkStmtM ss
 
 checkCatchM (CatchClause _ _ body) = checkStmtM body
 

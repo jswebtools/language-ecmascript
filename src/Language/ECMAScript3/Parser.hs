@@ -34,7 +34,6 @@ import Language.ECMAScript3.Syntax.Annotations
 import Data.Default.Class
 import Text.Parsec hiding (parse)
 import Text.Parsec.Expr
-import Control.Monad(liftM,liftM2)
 import Control.Monad.Trans (MonadIO,liftIO)
 import Numeric(readDec,readOct,readHex, readFloat)
 import Data.Char
@@ -98,7 +97,7 @@ withFreshLabelStack p = do oldState <- getState
 
 identifier :: Stream s Identity Char => Parser s (Id SourcePos)
 identifier =
-  liftM2 Id getPosition Lexer.identifier
+  liftA2 Id getPosition Lexer.identifier
 
 --{{{ Statements
 
@@ -176,7 +175,7 @@ parseContinueStmt = do
   pos' <- getPosition
   -- Ensure that the identifier is on the same line as 'continue.'
   id <- if sourceLine pos == sourceLine pos'
-        then liftM Just identifier <|> return Nothing
+        then fmap Just identifier <|> return Nothing
         else return Nothing
   optional semi
   return $ ContinueStmt pos id
@@ -188,7 +187,7 @@ parseBreakStmt = do
   pos' <- getPosition
   -- Ensure that the identifier is on the same line as 'break.'
   id <- if sourceLine pos == sourceLine pos'
-        then liftM Just identifier <|> return Nothing
+        then fmap Just identifier <|> return Nothing
         else return Nothing
   optional semi           
   return $ BreakStmt pos id
@@ -228,8 +227,8 @@ parseExpressionStmt = do
 
 parseForInStmt:: Stream s Identity Char => StatementParser s
 parseForInStmt =
-  let parseInit = (reserved "var" >> liftM ForInVar identifier)
-               <|> liftM ForInLVal lvalue
+  let parseInit = (reserved "var" >> fmap ForInVar identifier)
+               <|> fmap ForInLVal lvalue
   in do pos <- getPosition
         -- Lookahead, so that we don't clash with parseForStmt
         (init,expr) <- try $ do reserved "for"
@@ -242,8 +241,8 @@ parseForInStmt =
 
 parseForStmt:: Stream s Identity Char => StatementParser s
 parseForStmt =
-  let parseInit = (reserved "var" >> liftM VarInit (parseVarDecl `sepBy` comma))
-               <|> liftM ExprInit parseListExpr
+  let parseInit = (reserved "var" >> fmap VarInit (parseVarDecl `sepBy` comma))
+               <|> fmap ExprInit parseListExpr
                <|> return NoInit
     in do pos <- getPosition
           reserved "for"
@@ -304,7 +303,7 @@ parseVarDecl :: Stream s Identity Char => Parser s (VarDecl SourcePos)
 parseVarDecl = do
   pos <- getPosition
   id <- identifier
-  init <- (reservedOp "=" >> liftM Just assignExpr) <|> return Nothing
+  init <- (reservedOp "=" >> fmap Just assignExpr) <|> return Nothing
   return (VarDecl pos id init)
 
 parseVarDeclStmt:: Stream s Identity Char => StatementParser s
@@ -380,10 +379,10 @@ parseBoolLit = do
     parseTrueLit <|> parseFalseLit
 
 parseVarRef:: Stream s Identity Char => ExpressionParser s
-parseVarRef = liftM2 VarRef getPosition identifier
+parseVarRef = liftA2 VarRef getPosition identifier
 
 parseArrayLit:: Stream s Identity Char => ExpressionParser s
-parseArrayLit = liftM2 ArrayLit getPosition (squares (assignExpr `sepEndBy` comma))
+parseArrayLit = liftA2 ArrayLit getPosition (squares (assignExpr `sepEndBy` comma))
 
 parseFuncExpr :: Stream s Identity Char => ExpressionParser s
 parseFuncExpr = do
@@ -420,7 +419,7 @@ parseAsciiHexChar = do
 parseUnicodeHexChar :: Stream s Identity Char => Parser s Char
 parseUnicodeHexChar = do
   char 'u'
-  liftM (chr.fst.head.readHex) 
+  fmap (chr.fst.head.readHex)
         (sequence [hexDigit,hexDigit,hexDigit,hexDigit])
         
 isWhitespace ch = ch `elem` " \t"
@@ -440,7 +439,7 @@ parseStringLit' endWith =
       if c == '\r' || c == '\n' 
         then return (c:dropWhile isWhitespace cs) 
         else return (c:cs)) <|>
-   liftM2 (:) anyChar (parseStringLit' endWith)
+   liftA2 (:) anyChar (parseStringLit' endWith)
 
 parseStringLit:: Stream s Identity Char => ExpressionParser s
 parseStringLit = do
@@ -471,7 +470,7 @@ parseRegexpLit = do
                     ch <- anyChar -- TODO: too lenient
                     rest <- parseRe
                     return ('\\':ch:rest)) <|> 
-                liftM2 (:) anyChar parseRe
+                liftA2 (:) anyChar parseRe
   pos <- getPosition
   char '/'
   notFollowedBy $ char '/'
@@ -486,9 +485,9 @@ parseObjectLit =
         -- Parses a string, identifier or integer as the property name.  I
         -- apologize for the abstruse style, but it really does make the code
         -- much shorter.
-        name <- liftM (\(StringLit p s) -> PropString p s) parseStringLit
-            <|> liftM2 PropId getPosition identifier
-            <|> liftM2 PropNum getPosition (parseNumber >>= toInt)
+        name <- fmap (\(StringLit p s) -> PropString p s) parseStringLit
+            <|> liftA2 PropId getPosition identifier
+            <|> liftA2 PropNum getPosition (parseNumber >>= toInt)
         colon
         val <- assignExpr
         return (name,val)
@@ -679,16 +678,16 @@ unaryAssignExpr = do
   p <- getPosition
   let prefixInc = do
         reservedOp "++"
-        liftM (UnaryAssignExpr p PrefixInc) lvalue
+        fmap (UnaryAssignExpr p PrefixInc) lvalue
   let prefixDec = do
         reservedOp "--"
-        liftM (UnaryAssignExpr p PrefixDec) lvalue
+        fmap (UnaryAssignExpr p PrefixDec) lvalue
   let postfixInc e = do
         reservedOp "++"
-        liftM (UnaryAssignExpr p PostfixInc) (asLValue p e)
+        fmap (UnaryAssignExpr p PostfixInc) (asLValue p e)
   let postfixDec e = do
         reservedOp "--"
-        liftM (UnaryAssignExpr p PostfixDec) (asLValue p e)
+        fmap (UnaryAssignExpr p PostfixDec) (asLValue p e)
   let other = do
         e <- parseSimpleExpr Nothing
         postfixInc e <|> postfixDec e <|> return e
@@ -748,12 +747,12 @@ parseListExpr :: Stream s Identity Char => ExpressionParser s
 parseListExpr = assignExpr `sepBy1` comma >>= \exprs ->
   case exprs of
     [expr] -> return expr
-    es     -> liftM2 ListExpr getPosition (return es)
+    es     -> liftA2 ListExpr getPosition (return es)
 
 parseScript:: Stream s Identity Char => Parser s (JavaScript SourcePos)
 parseScript = do
   whiteSpace
-  liftM2 Script getPosition (parseStatement `sepBy` whiteSpace)
+  liftA2 Script getPosition (parseStatement `sepBy` whiteSpace)
 
 -- | A parser that parses an ECMAScript program.
 program :: Stream s Identity Char => Parser s (JavaScript SourcePos)
